@@ -12,5 +12,19 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/api/geoapify': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/geocode': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/overpass': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
 })

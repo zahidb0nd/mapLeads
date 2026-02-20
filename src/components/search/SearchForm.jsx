@@ -80,7 +80,7 @@ export default function SearchForm({ onSearchComplete }) {
 
     // Geocode via proxy to avoid CORS/rate-limit issues
     const response = await fetch(
-      `http://localhost:3001/api/geocode?q=${encodeURIComponent(locationText)}`
+      `/api/geocode?q=${encodeURIComponent(locationText)}`
     )
     const data = await response.json()
     if (!data || data.length === 0) {

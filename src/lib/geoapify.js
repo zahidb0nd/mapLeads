@@ -1,5 +1,5 @@
 const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY
-const PROXY_BASE_URL = 'http://localhost:3001/api'
+const PROXY_BASE_URL = '/api'
 
 class GeoapifyAPI {
   constructor(apiKey) {
