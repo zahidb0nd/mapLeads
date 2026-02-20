@@ -4,10 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import useStore from '@/stores/useStore'
+import { useToast } from '@/components/ui/toast'
+import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 
 export default function History() {
   const { searchHistory, loadSearchHistory, deleteSearchFromHistory, setSearchFilters } = useStore()
+  const toast = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadSearchHistory()
@@ -22,14 +26,12 @@ export default function History() {
       radius: search.radius,
       categories: search.categories || []
     })
-    // Navigate to search page
-    window.location.href = '/search'
+    navigate('/search')
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this search from history?')) {
-      await deleteSearchFromHistory(id)
-    }
+    await deleteSearchFromHistory(id)
+    toast.success('Deleted', 'Search removed from history.')
   }
 
   return (

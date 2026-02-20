@@ -32,3 +32,4 @@ dist-ssr
 pocketbase/pb_data/
 pocketbase/*.exe
 pocketbase/*.zip
+.vercel

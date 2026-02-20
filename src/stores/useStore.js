@@ -5,13 +5,20 @@ const useStore = create((set, get) => ({
   // Auth state
   user: pb.authStore.model,
   isAuthenticated: pb.authStore.isValid,
-  
+
+  // Theme
+  theme: localStorage.getItem('theme') || 'dark',
+
   // Search state
   searchResults: [],
   isSearching: false,
   searchError: null,
   selectedBusiness: null,
-  
+
+  // Sort/Filter
+  sortBy: 'default',
+  filterByPhone: false,
+
   // Filters
   searchFilters: {
     query: '',
@@ -21,25 +28,54 @@ const useStore = create((set, get) => ({
     radius: 5000,
     categories: [],
   },
-  
+
   // History and saved searches
   searchHistory: [],
   savedSearches: [],
-  
+
+  // Lead statuses & notes (stored locally by fsq_id)
+  leadData: JSON.parse(localStorage.getItem('leadData') || '{}'),
+
   // Dashboard stats
   stats: {
     totalSearches: 0,
     totalBusinessesFound: 0,
-    recentActivity: []
+    recentActivity: [],
+    categoryBreakdown: [],
+  },
+
+  // Theme actions
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    set({ theme })
+  },
+
+  // Sort/Filter actions
+  setSortBy: (sortBy) => set({ sortBy }),
+  setFilterByPhone: (filterByPhone) => set({ filterByPhone }),
+
+  // Lead data actions (status + notes per business)
+  setLeadStatus: (fsqId, status) => {
+    const leadData = { ...get().leadData }
+    leadData[fsqId] = { ...leadData[fsqId], status }
+    localStorage.setItem('leadData', JSON.stringify(leadData))
+    set({ leadData })
+  },
+  setLeadNote: (fsqId, note) => {
+    const leadData = { ...get().leadData }
+    leadData[fsqId] = { ...leadData[fsqId], note }
+    localStorage.setItem('leadData', JSON.stringify(leadData))
+    set({ leadData })
   },
 
   // Auth actions
   setUser: (user) => set({ user, isAuthenticated: !!user }),
-  
+
   logout: async () => {
     pb.authStore.clear()
-    set({ 
-      user: null, 
+    set({
+      user: null,
       isAuthenticated: false,
       searchResults: [],
       searchHistory: [],
@@ -168,8 +204,8 @@ const useStore = create((set, get) => ({
       const searches = await pb.collection('searches').getList(1, 1, {
         filter: `user = "${pb.authStore.model?.id}"`
       })
-      
-      const recentSearches = await pb.collection('searches').getList(1, 5, {
+
+      const recentSearches = await pb.collection('searches').getList(1, 50, {
         sort: '-created',
         filter: `user = "${pb.authStore.model?.id}"`
       })
@@ -178,11 +214,23 @@ const useStore = create((set, get) => ({
         return sum + (search.results_count || 0)
       }, 0)
 
+      // Category breakdown
+      const categoryCount = {}
+      recentSearches.items.forEach(search => {
+        const q = search.query || 'General'
+        categoryCount[q] = (categoryCount[q] || 0) + (search.results_count || 0)
+      })
+      const categoryBreakdown = Object.entries(categoryCount)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6)
+
       set({
         stats: {
           totalSearches: searches.totalItems,
           totalBusinessesFound: totalBusinesses,
-          recentActivity: recentSearches.items
+          recentActivity: recentSearches.items.slice(0, 5),
+          categoryBreakdown,
         }
       })
     } catch (error) {

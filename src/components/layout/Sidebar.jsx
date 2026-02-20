@@ -1,28 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Search, History, Bookmark, MapPin } from 'lucide-react'
+import { LayoutDashboard, Search, History, Bookmark, MapPin, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  {
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard
-  },
-  {
-    name: 'Search',
-    href: '/search',
-    icon: Search
-  },
-  {
-    name: 'History',
-    href: '/history',
-    icon: History
-  },
-  {
-    name: 'Saved Searches',
-    href: '/saved-searches',
-    icon: Bookmark
-  }
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Search', href: '/search', icon: Search },
+  { name: 'History', href: '/history', icon: History },
+  { name: 'Saved Searches', href: '/saved-searches', icon: Bookmark },
+  { name: 'Profile', href: '/profile', icon: User },
 ]
 
 export default function Sidebar() {

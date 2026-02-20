@@ -6,14 +6,21 @@ import Dashboard from './pages/Dashboard'
 import Search from './pages/Search'
 import History from './pages/History'
 import SavedSearches from './pages/SavedSearches'
+import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
+import { ToastProvider } from './components/ui/toast'
 
 function App() {
-  const { isAuthenticated, user } = useStore()
+  const { isAuthenticated, user, theme } = useStore()
+
+  useEffect(() => {
+    // Apply theme on load
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -24,8 +31,9 @@ function App() {
   }, [isAuthenticated, user])
 
   return (
+    <ToastProvider>
     <Router>
-      <div className="dark min-h-screen bg-background text-foreground">
+      <div className="min-h-screen bg-background text-foreground">
         <Routes>
           {/* Public auth routes — redirect to dashboard if already logged in */}
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
@@ -41,6 +49,7 @@ function App() {
             <Route path="search" element={<Search />} />
             <Route path="history" element={<History />} />
             <Route path="saved-searches" element={<SavedSearches />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Catch all */}
@@ -48,6 +57,7 @@ function App() {
         </Routes>
       </div>
     </Router>
+    </ToastProvider>
   )
 }
 

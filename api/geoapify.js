@@ -1,4 +1,4 @@
-// Vercel Serverless Function — proxies Geoapify Places API
+// Vercel Serverless Function — proxies Geoapify Places API and Place Details API
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
@@ -10,8 +10,16 @@ export default async function handler(req, res) {
   const params = new URLSearchParams(req.query)
   params.set('apiKey', apiKey)
 
+  // Determine which Geoapify endpoint to call based on the request path
+  // Handles both /api/geoapify/places and /api/geoapify/place-details
+  const url = req.url || ''
+  let geoapifyEndpoint = 'https://api.geoapify.com/v2/places'
+  if (url.includes('place-details')) {
+    geoapifyEndpoint = 'https://api.geoapify.com/v2/place-details'
+  }
+
   try {
-    const response = await fetch(`https://api.geoapify.com/v2/places?${params.toString()}`, {
+    const response = await fetch(`${geoapifyEndpoint}?${params.toString()}`, {
       headers: { 'Accept': 'application/json' }
     })
     const data = await response.json()

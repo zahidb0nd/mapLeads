@@ -1,6 +1,9 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/geoapify/places", "destination": "/api/geoapify" },
+    { "source": "/api/geoapify/place-details", "destination": "/api/geoapify" },
+    { "source": "/api/geocode", "destination": "/api/geocode" },
+    { "source": "/api/overpass", "destination": "/api/overpass" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -8,7 +11,8 @@
       "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" }
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
       ]
     }
   ]

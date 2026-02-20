@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Trash2, Search, Edit, MapPin, Plus } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import useStore from '@/stores/useStore'
+import { useToast } from '@/components/ui/toast'
 
 export default function SavedSearches() {
   const { 
@@ -19,6 +21,8 @@ export default function SavedSearches() {
     setSearchFilters 
   } = useStore()
 
+  const toast = useToast()
+  const navigate = useNavigate()
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [searchName, setSearchName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -29,7 +33,7 @@ export default function SavedSearches() {
 
   const handleSaveCurrentSearch = async () => {
     if (!searchName.trim()) {
-      alert('Please enter a name for this search')
+      toast.error('Name required', 'Please enter a name for this search.')
       return
     }
 
@@ -47,8 +51,9 @@ export default function SavedSearches() {
       })
       setSearchName('')
       setShowSaveDialog(false)
+      toast.success('Saved!', `"${searchName}" has been saved.`)
     } catch (error) {
-      alert('Failed to save search')
+      toast.error('Failed to save', 'Could not save this search.')
     } finally {
       setIsSaving(false)
     }
@@ -63,13 +68,12 @@ export default function SavedSearches() {
       radius: search.radius,
       categories: search.categories || []
     })
-    window.location.href = '/search'
+    navigate('/search')
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this saved search?')) {
-      await deleteSavedSearch(id)
-    }
+    await deleteSavedSearch(id)
+    toast.success('Deleted', 'Saved search removed.')
   }
 
   return (

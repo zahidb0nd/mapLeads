@@ -9,7 +9,7 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-const GEOAPIFY_API_KEY = process.env.VITE_GEOAPIFY_API_KEY || '966566a4fb024ee0844e4e71105fc6fd';
+const GEOAPIFY_API_KEY = process.env.VITE_GEOAPIFY_API_KEY;
 
 // Proxy endpoint for Geoapify Places search
 app.get('/api/geoapify/places', async (req, res) => {

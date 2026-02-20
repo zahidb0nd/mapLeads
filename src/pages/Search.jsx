@@ -1,42 +1,65 @@
-import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Download, FileSpreadsheet, SlidersHorizontal, Phone } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 import SearchForm from '@/components/search/SearchForm'
 import MapView from '@/components/search/MapView'
 import BusinessList from '@/components/business/BusinessList'
 import BusinessDetails from '@/components/business/BusinessDetails'
 import useStore from '@/stores/useStore'
-import { exportToCSV } from '@/lib/utils'
+import { useToast } from '@/components/ui/toast'
+import { exportToCSV, exportToXLSX } from '@/lib/utils'
 
 export default function Search() {
-  const { searchResults, searchFilters, selectedBusiness, setSelectedBusiness } = useStore()
+  const {
+    searchResults, searchFilters, selectedBusiness, setSelectedBusiness,
+    sortBy, setSortBy, filterByPhone, setFilterByPhone,
+  } = useStore()
   const [showDetails, setShowDetails] = useState(false)
+  const { success, error, warning } = useToast()
 
   const handleBusinessClick = (business) => {
     setSelectedBusiness(business)
     setShowDetails(true)
   }
 
-  const handleExportCSV = () => {
-    if (searchResults.length === 0) {
-      alert('No results to export')
-      return
+  // Apply filter + sort
+  const displayResults = useMemo(() => {
+    let results = [...searchResults]
+    if (filterByPhone) results = results.filter(b => b.tel)
+    switch (sortBy) {
+      case 'name': results.sort((a, b) => a.name.localeCompare(b.name)); break
+      case 'distance': results.sort((a, b) => (a.distance || 0) - (b.distance || 0)); break
+      case 'name_desc': results.sort((a, b) => b.name.localeCompare(a.name)); break
+      default: break
     }
+    return results
+  }, [searchResults, sortBy, filterByPhone])
 
-    const exportData = searchResults.map(business => ({
-      name: business.name,
-      address: business.formatted_address || business.address,
-      phone: business.tel || '',
-      email: business.email || '',
-      category: business.categories?.[0]?.name || '',
-      latitude: business.latitude,
-      longitude: business.longitude,
-      distance: business.distance ? `${(business.distance / 1000).toFixed(2)} km` : ''
-    }))
+  const getExportData = () => searchResults.map(business => ({
+    name: business.name,
+    address: business.formatted_address || business.address || '',
+    phone: business.tel || '',
+    email: business.email || '',
+    category: business.categories?.[0]?.name || '',
+    latitude: business.latitude,
+    longitude: business.longitude,
+    distance: business.distance ? `${(business.distance / 1000).toFixed(2)} km` : '',
+  }))
 
+  const handleExportCSV = () => {
+    if (searchResults.length === 0) { warning('No results', 'Run a search first.'); return }
     const timestamp = new Date().toISOString().split('T')[0]
-    exportToCSV(exportData, `mapleads-export-${timestamp}.csv`)
+    exportToCSV(getExportData(), `mapleads-${timestamp}.csv`)
+    success('Exported!', `${searchResults.length} businesses exported to CSV.`)
+  }
+
+  const handleExportXLSX = () => {
+    if (searchResults.length === 0) { warning('No results', 'Run a search first.'); return }
+    const timestamp = new Date().toISOString().split('T')[0]
+    exportToXLSX(getExportData(), `mapleads-${timestamp}.xlsx`)
+    success('Exported!', `${searchResults.length} businesses exported to Excel.`)
   }
 
   const mapCenter = searchFilters.latitude && searchFilters.longitude
@@ -44,28 +67,32 @@ export default function Search() {
     : [51.505, -0.09]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Search Businesses</h1>
-          <p className="text-muted-foreground mt-1">
-            Find local businesses without websites
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold">Search Businesses</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Find local businesses without websites</p>
         </div>
         {searchResults.length > 0 && (
-          <Button onClick={handleExportCSV}>
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportXLSX}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Excel
+            </Button>
+          </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Search Form */}
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Search Filters</CardTitle>
+              <CardTitle className="text-base md:text-lg">Search Filters</CardTitle>
             </CardHeader>
             <CardContent>
               <SearchForm />
@@ -74,16 +101,16 @@ export default function Search() {
         </div>
 
         {/* Map and Results */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* Map */}
           <Card>
             <CardHeader>
-              <CardTitle>Map View</CardTitle>
+              <CardTitle className="text-base md:text-lg">Map View</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="h-96">
+              <div className="h-64 md:h-96">
                 <MapView
-                  businesses={searchResults}
+                  businesses={displayResults}
                   center={mapCenter}
                   onBusinessClick={handleBusinessClick}
                 />
@@ -91,14 +118,43 @@ export default function Search() {
             </CardContent>
           </Card>
 
+          {/* Sort/Filter bar */}
+          {searchResults.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-40 h-8 text-sm"
+              >
+                <option value="default">Default order</option>
+                <option value="name">Name A→Z</option>
+                <option value="name_desc">Name Z→A</option>
+                <option value="distance">Nearest first</option>
+              </Select>
+              <Button
+                variant={filterByPhone ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-sm"
+                onClick={() => setFilterByPhone(!filterByPhone)}
+              >
+                <Phone className="h-3 w-3 mr-1" />
+                Has Phone
+              </Button>
+              <span className="text-xs text-muted-foreground ml-auto">
+                {displayResults.length} of {searchResults.length} results
+              </span>
+            </div>
+          )}
+
           {/* Results List */}
           <Card>
             <CardHeader>
-              <CardTitle>Search Results</CardTitle>
+              <CardTitle className="text-base md:text-lg">Search Results</CardTitle>
             </CardHeader>
             <CardContent>
               <BusinessList
-                businesses={searchResults}
+                businesses={displayResults}
                 onBusinessClick={handleBusinessClick}
               />
             </CardContent>
@@ -115,3 +171,4 @@ export default function Search() {
     </div>
   )
 }
+
