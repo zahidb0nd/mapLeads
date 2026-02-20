@@ -10,13 +10,15 @@ export default async function handler(req, res) {
   const params = new URLSearchParams(req.query)
   params.set('apiKey', apiKey)
 
-  // Determine which Geoapify endpoint to call based on the request path
-  // Handles both /api/geoapify/places and /api/geoapify/place-details
-  const url = req.url || ''
-  let geoapifyEndpoint = 'https://api.geoapify.com/v2/places'
-  if (url.includes('place-details')) {
-    geoapifyEndpoint = 'https://api.geoapify.com/v2/place-details'
-  }
+  // Determine which Geoapify endpoint to call.
+  // Vercel rewrites strip the original path, so we use a query param
+  // to distinguish: geoapify.js appends ?_endpoint=place-details for details.
+  // Falls back to checking req.url for local dev compatibility.
+  const isPlaceDetails = req.query._endpoint === 'place-details' || (req.url || '').includes('place-details')
+  params.delete('_endpoint')
+  const geoapifyEndpoint = isPlaceDetails
+    ? 'https://api.geoapify.com/v2/place-details'
+    : 'https://api.geoapify.com/v2/places'
 
   try {
     const response = await fetch(`${geoapifyEndpoint}?${params.toString()}`, {

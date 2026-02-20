@@ -63,7 +63,7 @@ class GeoapifyAPI {
     }
 
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/geoapify/place-details?id=${placeId}`)
+      const response = await fetch(`${PROXY_BASE_URL}/geoapify/place-details?id=${placeId}&_endpoint=place-details`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch place details')

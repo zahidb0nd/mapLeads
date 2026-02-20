@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/toast'
 import { exportToCSV } from '@/lib/utils'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import SearchForm from '@/components/search/SearchForm'
+import { useBusinessSearch } from '@/hooks/useBusinessSearch'
 
 const QUICK_CATEGORIES = [
   { label: 'All',         emoji: '🌐', value: '' },
@@ -215,11 +216,19 @@ export default function Search() {
     searchResults, searchFilters, isSearching, searchError,
     sortBy, setSortBy, filterByPhone, setFilterByPhone,
   } = useStore()
+  const { search } = useBusinessSearch()
   const { success, warning } = useToast()
   const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table'
   const [showFilters, setShowFilters] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
   usePageTitle('Search')
+
+  const handleCategoryChip = async (value) => {
+    setActiveCategory(value)
+    // Only trigger a search if we already have coordinates
+    if (!searchFilters.latitude || !searchFilters.longitude) return
+    await search({ query: value, latitude: searchFilters.latitude, longitude: searchFilters.longitude, categories: [] })
+  }
 
   const displayResults = useMemo(() => {
     let results = [...searchResults]
@@ -273,7 +282,7 @@ export default function Search() {
           {QUICK_CATEGORIES.map(cat => (
             <button
               key={cat.value}
-              onClick={() => setActiveCategory(cat.value)}
+              onClick={() => handleCategoryChip(cat.value)}
               className={[
                 'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border',
                 activeCategory === cat.value
