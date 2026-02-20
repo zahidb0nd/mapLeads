@@ -25,7 +25,7 @@ if [ ! -f "./.env" ]; then
     echo "⚠️  .env file not found!"
     echo "Creating from .env.example..."
     cp .env.example .env
-    echo "⚠️  Please edit .env and add your Foursquare API key"
+    echo "⚠️  Please edit .env and add your Geoapify API key"
     exit 1
 fi
 

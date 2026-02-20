@@ -33,43 +33,34 @@ If you don't have Node.js installed:
    ```
 3. Wait for all packages to download and install
 
-## 🔑 Step 3: Get Foursquare API Key
+## 🔑 Step 3: Get Geoapify API Key
 
-### Create Foursquare Developer Account
+### Create a Geoapify Account
 
-1. Go to [Foursquare Developer Portal](https://location.foursquare.com/developer/)
-2. Click "Sign Up" or "Log In"
-3. Complete registration
-4. Verify your email address
-
-### Create a New Project
-
-1. Once logged in, click "Create a New Project"
-2. Fill in project details:
-   - **Project Name**: MapLeads
-   - **Description**: Local business lead generator
-   - **Project Type**: Web Application
-3. Click "Create Project"
+1. Go to [Geoapify](https://www.geoapify.com/)
+2. Click "Get Started for Free"
+3. Complete registration and verify your email
 
 ### Get Your API Key
 
-1. In your project dashboard, find the API key section
-2. Copy your API key (it should start with `fsq3...`)
-3. Keep this key safe - you'll need it next
+1. Once logged in, go to your [API Keys dashboard](https://myprojects.geoapify.com/)
+2. Click "Create a New Project"
+3. Copy the generated API key
+4. Keep this key safe — you'll need it next
 
 ### API Key Pricing
 
-- **Free Tier**: 50,000 API calls per month
+- **Free Tier**: 3,000 requests/day (~90,000/month)
 - **No credit card required** for free tier
 - Perfect for testing and small-scale usage
 
 ## ⚙️ Step 4: Configure Environment Variables
 
 1. Open the `.env` file in the project root
-2. Add your Foursquare API key:
+2. Add your Geoapify API key:
    ```env
    VITE_POCKETBASE_URL=http://127.0.0.1:8090
-   VITE_FOURSQUARE_API_KEY=fsq3YOUR_API_KEY_HERE
+   VITE_GEOAPIFY_API_KEY=YOUR_GEOAPIFY_API_KEY_HERE
    VITE_APP_NAME=MapLeads
    VITE_APP_URL=http://localhost:3000
    ```
@@ -209,10 +200,10 @@ Make sure everything is working:
 - Check that it's on port 8090
 - Verify `VITE_POCKETBASE_URL` in `.env`
 
-### Issue: "Foursquare API error"
+### Issue: "Geoapify API error"
 **Solution**:
 - Verify your API key in `.env`
-- Check you copied the entire key (starts with `fsq3`)
+- Check you copied the entire key from the Geoapify dashboard
 - Ensure you haven't exceeded the free tier limit (50k calls/month)
 - Try restarting the dev server after adding the key
 

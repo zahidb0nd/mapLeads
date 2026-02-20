@@ -8,7 +8,7 @@ MapLeads is now fully built and ready to use! This document provides a comprehen
 
 ### Complete MVP Application (Phases 1-3)
 
-A fully functional SaaS application for finding local businesses without websites using Foursquare Places API.
+A fully functional SaaS application for finding local businesses without websites using Geoapify Places API.
 
 ### ✅ All Implemented Features
 
@@ -21,7 +21,7 @@ A fully functional SaaS application for finding local businesses without website
 - ✅ shadcn/ui component library
 
 #### Phase 2: Search & Discovery
-- ✅ Foursquare Places API integration
+- ✅ Geoapify Places API integration
 - ✅ Business search with advanced filters
 - ✅ Interactive Leaflet map with markers
 - ✅ Geolocation support
@@ -106,7 +106,7 @@ mapleads/
 │   │
 │   ├── 📚 Libraries
 │   │   ├── pocketbase.js       # PocketBase client
-│   │   ├── foursquare.js       # Foursquare API client
+│   │   ├── geoapify.js         # Geoapify Places API client
 │   │   └── utils.js            # Utility functions
 │   │
 │   └── 🗃️ State Management
@@ -147,7 +147,8 @@ mapleads/
 ### External APIs
 | Service | Purpose |
 |---------|---------|
-| Foursquare Places API | Business data & search |
+| Geoapify Places API | Business data & search |
+| Nominatim (OpenStreetMap) | Geocoding (city → coordinates) |
 | OpenStreetMap | Map tiles |
 
 ## 💾 Database Schema
@@ -291,7 +292,7 @@ mapleads/
    - Start: `./pocketbase serve`
 
 3. **Configure & Run**
-   - Add Foursquare API key to `.env`
+   - Add Geoapify API key to `.env`
    - Run: `npm run dev`
    - Visit: http://localhost:3000
 
@@ -373,14 +374,14 @@ npm run lint
 ### Environment Variables
 ```env
 VITE_POCKETBASE_URL=http://127.0.0.1:8090
-VITE_FOURSQUARE_API_KEY=your_api_key_here
+VITE_GEOAPIFY_API_KEY=your_api_key_here
 VITE_APP_NAME=MapLeads
 VITE_APP_URL=http://localhost:3000
 ```
 
 ## 🐛 Known Limitations
 
-1. **Foursquare API**: Free tier limited to 50,000 calls/month
+1. **Geoapify API**: Free tier limited to 3,000 requests/day
 2. **Geolocation**: Requires HTTPS in production
 3. **Map Tiles**: Requires internet connection
 4. **PocketBase**: Single instance (scalable in future)
@@ -391,7 +392,7 @@ VITE_APP_URL=http://localhost:3000
 - [Vite Documentation](https://vitejs.dev)
 - [Tailwind CSS](https://tailwindcss.com)
 - [PocketBase Docs](https://pocketbase.io/docs)
-- [Foursquare API](https://location.foursquare.com/developer/)
+- [Geoapify API](https://www.geoapify.com/)
 - [Leaflet Documentation](https://leafletjs.com)
 
 ## 🤝 Contributing
@@ -409,7 +410,7 @@ This project was built using amazing open-source tools:
 - Vite Team
 - Tailwind Labs
 - PocketBase
-- Foursquare
+- Geoapify
 - Leaflet
 - shadcn
 - And many more!
@@ -429,7 +430,7 @@ You have:
 
 **Next Steps:**
 1. Read [SETUP_GUIDE.md](./SETUP_GUIDE.md) to get started
-2. Get your Foursquare API key
+2. Get your Geoapify API key
 3. Set up PocketBase
 4. Start finding leads!
 

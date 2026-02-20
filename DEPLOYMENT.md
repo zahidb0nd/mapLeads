@@ -40,7 +40,7 @@ We'll deploy them separately for best performance and scalability.
    - Go to your project settings
    - Add environment variables:
      - `VITE_POCKETBASE_URL`: Your PocketBase production URL
-     - `VITE_FOURSQUARE_API_KEY`: Your Foursquare API key
+     - `VITE_GEOAPIFY_API_KEY`: Your Geoapify API key
      - `VITE_APP_NAME`: MapLeads
      - `VITE_APP_URL`: Your production URL
 
@@ -216,7 +216,7 @@ We'll deploy them separately for best performance and scalability.
 ### Frontend (.env)
 ```env
 VITE_POCKETBASE_URL=https://api.yourdomain.com
-VITE_FOURSQUARE_API_KEY=your_production_api_key
+VITE_GEOAPIFY_API_KEY=your_production_api_key
 VITE_APP_NAME=MapLeads
 VITE_APP_URL=https://yourdomain.com
 ```
@@ -258,7 +258,7 @@ Set via systemd service or hosting platform environment variables.
 
 4. **Monitoring**
    - Set up error logging (Sentry, LogRocket)
-   - Monitor API usage (Foursquare limits)
+   - Monitor API usage (Geoapify limits)
    - Track uptime (UptimeRobot, Pingdom)
 
 ## Backup Strategy
@@ -307,7 +307,7 @@ crontab -e
 - Error rates
 - User signups
 - Search volumes
-- Foursquare API usage
+- Geoapify API usage
 
 ## Troubleshooting
 
@@ -322,7 +322,7 @@ crontab -e
 - Verify CORS settings
 
 ### API errors
-- Check Foursquare API limits
+- Check Geoapify API limits (3,000 req/day on free tier)
 - Verify API key is valid
 - Check rate limiting
 

@@ -46,9 +46,9 @@ The schema will be automatically created when you first run the application.
 - Unique names per user
 
 ### businesses
-- Cached business data from Foursquare API
+- Cached business data from Geoapify Places API
 - Prevents duplicate API calls
-- Stores: Foursquare ID, name, address, coordinates, categories, contact info
+- Stores: Geoapify place ID, name, address, coordinates, categories, contact info
 
 ## API Access
 

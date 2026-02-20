@@ -25,7 +25,7 @@ if not exist ".env" (
     echo ⚠️ .env file not found!
     echo Creating from .env.example...
     copy .env.example .env
-    echo ⚠️ Please edit .env and add your Foursquare API key
+    echo ⚠️ Please edit .env and add your Geoapify API key
     pause
     exit /b 1
 )

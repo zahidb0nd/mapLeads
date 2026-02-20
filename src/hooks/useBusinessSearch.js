@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import foursquareAPI from '@/lib/geoapify'
+import geoapifyAPI from '@/lib/geoapify'
 import useStore from '@/stores/useStore'
 
 export function useBusinessSearch() {
@@ -31,8 +31,8 @@ export function useBusinessSearch() {
     setSearchError(null)
 
     try {
-      // Search places using Foursquare API
-      const results = await foursquareAPI.searchPlaces({
+      // Search places using Geoapify API
+      const results = await geoapifyAPI.searchPlaces({
         query: filters.query,
         latitude: filters.latitude,
         longitude: filters.longitude,
@@ -42,13 +42,13 @@ export function useBusinessSearch() {
       })
 
       // Filter places without websites
-      const placesWithoutWebsite = foursquareAPI.filterPlacesWithoutWebsite(results)
+      const placesWithoutWebsite = geoapifyAPI.filterPlacesWithoutWebsite(results)
 
       setSearchResults(placesWithoutWebsite)
 
       // Save to search history
       await addSearchToHistory({
-        query: filters.query || 'All businesses',
+        query: filters.query || 'General',
         location: filters.location,
         latitude: filters.latitude,
         longitude: filters.longitude,
@@ -83,7 +83,7 @@ export function useBusinessSearch() {
     setError(null)
 
     try {
-      const details = await foursquareAPI.getPlaceDetails(fsqId)
+      const details = await geoapifyAPI.getPlaceDetails(fsqId)
       return details
     } catch (err) {
       const errorMsg = err.message || 'Failed to get place details'

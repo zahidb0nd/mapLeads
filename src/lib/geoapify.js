@@ -17,22 +17,29 @@ class GeoapifyAPI {
       lang: 'en',
     })
 
-    // Map selected category ids to Geoapify category strings
+    // Build category filter:
+    // 1. If explicit category ids were passed (from category chips), map them directly.
+    // 2. Else if the query text matches a known category keyword, use that.
+    // 3. Otherwise fall back to broad category set.
+    let resolvedCategories = ''
     if (categories.length > 0) {
-      const geoapifyCategories = categories
+      resolvedCategories = categories
         .map(id => GeoapifyAPI.getCategoryById(id))
         .filter(Boolean)
         .join(',')
-      if (geoapifyCategories) {
-        params.append('categories', geoapifyCategories)
-      }
-    } else {
-      params.append('categories', 'commercial,catering,service,leisure,sport,healthcare,education,entertainment,tourism')
+    } else if (query) {
+      const fromQuery = GeoapifyAPI.getCategoryById(query.trim().toLowerCase())
+      if (fromQuery) resolvedCategories = fromQuery
     }
+    params.append(
+      'categories',
+      resolvedCategories || 'commercial,catering,service,leisure,sport,healthcare,education,entertainment,tourism'
+    )
 
-    if (query) {
-      params.append('name', query)
-    }
+    // Do not use Geoapify's strict 'name' filter — it would exclude places
+    // whose name doesn't literally contain the search term (e.g. searching
+    // "cafe" would miss "Blue Tokai" or "Third Wave"). Category filtering
+    // above already narrows results to the correct business type.
 
     try {
       const response = await fetch(`${PROXY_BASE_URL}/geoapify/places?${params}`)
@@ -115,16 +122,79 @@ class GeoapifyAPI {
 
   static getCategoryById(id) {
     const map = {
+      // Catering
       'restaurant': 'catering.restaurant',
+      'restaurants': 'catering.restaurant',
       'cafe': 'catering.cafe',
-      'retail': 'commercial',
-      'salon': 'service.beauty',
-      'gym': 'sport.fitness',
-      'doctor': 'healthcare',
-      'auto_repair': 'service.vehicle',
+      'cafes': 'catering.cafe',
+      'café': 'catering.cafe',
+      'cafés': 'catering.cafe',
+      'coffee': 'catering.cafe',
+      'coffee shop': 'catering.cafe',
       'bar': 'catering.bar',
+      'bars': 'catering.bar',
+      'pub': 'catering.bar',
+      'pubs': 'catering.bar',
+      'fast food': 'catering.fast_food',
+      'bakery': 'catering.bakery',
+      'bakeries': 'catering.bakery',
+      // Retail & commercial
+      'retail': 'commercial',
+      'shop': 'commercial.shopping_mall',
+      'shops': 'commercial.shopping_mall',
+      'store': 'commercial',
+      'stores': 'commercial',
+      'supermarket': 'commercial.supermarket',
+      'supermarkets': 'commercial.supermarket',
+      // Services
+      'salon': 'service.beauty',
+      'salons': 'service.beauty',
+      'beauty': 'service.beauty',
+      'barber': 'service.beauty.hairdresser',
+      'barbers': 'service.beauty.hairdresser',
+      'hairdresser': 'service.beauty.hairdresser',
+      'spa': 'service.beauty.spa',
+      'massage': 'service.beauty.massage',
+      'auto repair': 'service.vehicle.repair',
+      'auto_repair': 'service.vehicle.repair',
+      'mechanic': 'service.vehicle.repair',
+      'mechanics': 'service.vehicle.repair',
+      'car wash': 'service.vehicle.car_wash',
+      'plumber': 'service',
+      'plumbers': 'service',
+      'electrician': 'service',
+      'electricians': 'service',
+      'laundry': 'service.cleaning.laundry',
+      'dry cleaning': 'service.cleaning.dry_cleaning',
+      'tailor': 'service.tailor',
+      // Sport & fitness
+      'gym': 'sport.fitness',
+      'gyms': 'sport.fitness',
+      'fitness': 'sport.fitness',
+      'fitness centre': 'sport.fitness.fitness_centre',
+      'swimming pool': 'sport.swimming_pool',
+      // Healthcare
+      'doctor': 'healthcare',
+      'doctors': 'healthcare',
+      'clinic': 'healthcare.clinic_or_praxis',
+      'clinics': 'healthcare.clinic_or_praxis',
+      'hospital': 'healthcare.hospital',
+      'hospitals': 'healthcare.hospital',
+      'pharmacy': 'healthcare.pharmacy',
+      'pharmacies': 'healthcare.pharmacy',
+      'dentist': 'healthcare.dentist',
+      'dentists': 'healthcare.dentist',
+      // Accommodation
       'hotel': 'accommodation.hotel',
+      'hotels': 'accommodation.hotel',
+      'hostel': 'accommodation.hostel',
+      'guest house': 'accommodation.guest_house',
+      // Tourism & leisure
       'landmark': 'tourism.attraction',
+      'landmarks': 'tourism.attraction',
+      'attraction': 'tourism.attraction',
+      'museum': 'entertainment.museum',
+      'park': 'leisure.park',
     }
     return map[id] || null
   }

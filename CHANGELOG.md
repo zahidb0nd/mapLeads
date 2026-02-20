@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release of MapLeads MVP
 - User authentication (signup/login) with PocketBase
-- Business search using Foursquare Places API
+- Business search using Geoapify Places API
 - Interactive map view with Leaflet
 - Filter businesses without websites
 - Advanced search filters (location, radius, categories)

@@ -36,13 +36,8 @@ const useStore = create((set, get) => ({
   // Lead statuses & notes (stored locally by fsq_id)
   leadData: JSON.parse(localStorage.getItem('leadData') || '{}'),
 
-  // Dashboard stats
-  stats: {
-    totalSearches: 0,
-    totalBusinessesFound: 0,
-    recentActivity: [],
-    categoryBreakdown: [],
-  },
+  // Dashboard stats (null = not yet loaded, triggers loading skeleton)
+  stats: null,
 
   // Theme actions
   setTheme: (theme) => {
