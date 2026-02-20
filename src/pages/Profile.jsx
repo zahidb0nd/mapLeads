@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 import useStore from '@/stores/useStore'
 import pb from '@/lib/pocketbase'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function Profile() {
   const { user, setUser } = useStore()
   const { success, error } = useToast()
+  usePageTitle('Profile')
 
   const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' })
   const [passwordForm, setPasswordForm] = useState({ oldPassword: '', password: '', passwordConfirm: '' })

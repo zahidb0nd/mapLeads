@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search as SearchIcon, MapPin, Loader2 } from 'lucide-react'
+import { Search as SearchIcon, MapPin, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import useStore from '@/stores/useStore'
 import { useBusinessSearch } from '@/hooks/useBusinessSearch'
+import { useToast } from '@/components/ui/toast'
 import foursquareAPI from '@/lib/geoapify'
 
 const RADIUS_OPTIONS = [
@@ -19,17 +20,19 @@ const RADIUS_OPTIONS = [
 
 export default function SearchForm({ onSearchComplete }) {
   const { searchFilters, setSearchFilters } = useStore()
-  const { search, isLoading } = useBusinessSearch()
+  const { search, isLoading, error } = useBusinessSearch()
+  const { warning, error: toastError } = useToast()
   const [localQuery, setLocalQuery] = useState(searchFilters.query || '')
   const [localLocation, setLocalLocation] = useState(searchFilters.location || '')
   const [selectedCategories, setSelectedCategories] = useState(searchFilters.categories || [])
   const [geolocating, setGeolocating] = useState(false)
+  const [lastSubmitData, setLastSubmitData] = useState(null)
 
   const categories = foursquareAPI.constructor.getPopularCategories()
 
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser')
+      warning('Not supported', 'Geolocation is not supported by your browser.')
       return
     }
 
@@ -37,17 +40,17 @@ export default function SearchForm({ onSearchComplete }) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
-        setSearchFilters({ 
-          latitude, 
+        setSearchFilters({
+          latitude,
           longitude,
           location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
         })
         setLocalLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         setGeolocating(false)
       },
-      (error) => {
-        console.error('Geolocation error:', error)
-        alert('Unable to retrieve your location')
+      (err) => {
+        console.error('Geolocation error:', err)
+        warning('Location unavailable', 'Unable to retrieve your location. Please type a city name instead.')
         setGeolocating(false)
       }
     )
@@ -89,46 +92,55 @@ export default function SearchForm({ onSearchComplete }) {
     return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
+  const doSearch = async (query, location, cats) => {
     let latitude = searchFilters.latitude
     let longitude = searchFilters.longitude
 
-    // Geocode the typed location if needed
     try {
-      const coords = await geocodeLocation(localLocation)
+      const coords = await geocodeLocation(location)
       latitude = coords.latitude
       longitude = coords.longitude
     } catch (err) {
-      alert(err.message)
+      toastError('Location not found', err.message || 'Could not find that location. Try a different city name.')
       return
     }
 
-    // Update filters in store with resolved coordinates
-    setSearchFilters({
-      query: localQuery,
-      location: localLocation,
-      latitude,
-      longitude,
-      categories: selectedCategories
-    })
+    setSearchFilters({ query, location, latitude, longitude, categories: cats })
+    setLastSubmitData({ query, location, cats })
 
-    // Perform search
-    const results = await search({
-      query: localQuery,
-      latitude,
-      longitude,
-      categories: selectedCategories
-    })
+    const results = await search({ query, latitude, longitude, categories: cats })
+    if (onSearchComplete) onSearchComplete(results)
+  }
 
-    if (onSearchComplete) {
-      onSearchComplete(results)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    await doSearch(localQuery, localLocation, selectedCategories)
+  }
+
+  const handleRetry = () => {
+    if (lastSubmitData) {
+      doSearch(lastSubmitData.query, lastSubmitData.location, lastSubmitData.cats)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Error State with Retry */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-red-500 font-medium">Search failed</p>
+            <p className="text-xs text-red-400 mt-0.5">{error}</p>
+          </div>
+          {lastSubmitData && (
+            <Button type="button" variant="outline" size="sm" onClick={handleRetry} className="flex-shrink-0 border-red-500/30 text-red-500 hover:bg-red-500/10">
+              <RefreshCw className="h-3 w-3 mr-1" /> Retry
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Search Query */}
       <div className="space-y-2">
         <Label htmlFor="query">Business Type (Optional)</Label>

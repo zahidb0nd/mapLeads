@@ -59,10 +59,18 @@ export function useBusinessSearch() {
 
       return placesWithoutWebsite
     } catch (err) {
-      const errorMsg = err.message || 'Failed to search businesses'
+      console.error('Search error:', err)
+      let errorMsg = 'Search unavailable right now. Please try again in a moment.'
+      if (err?.message?.toLowerCase().includes('network') ||
+          err?.message?.toLowerCase().includes('fetch') ||
+          err?.message?.toLowerCase().includes('failed to fetch')) {
+        errorMsg = 'Connection error. Please check your internet and try again.'
+      } else if (err?.message?.toLowerCase().includes('location') ||
+                 err?.message?.toLowerCase().includes('geocod')) {
+        errorMsg = err.message
+      }
       setError(errorMsg)
       setSearchError(errorMsg)
-      console.error('Search error:', err)
       return []
     } finally {
       setIsLoading(false)

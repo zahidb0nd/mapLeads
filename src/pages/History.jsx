@@ -1,20 +1,24 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Trash2, Search, MapPin, Calendar } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { HistoryItemSkeleton } from '@/components/ui/skeleton'
 import useStore from '@/stores/useStore'
 import { useToast } from '@/components/ui/toast'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function History() {
   const { searchHistory, loadSearchHistory, deleteSearchFromHistory, setSearchFilters } = useStore()
   const toast = useToast()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  usePageTitle('Search History')
 
   useEffect(() => {
-    loadSearchHistory()
+    loadSearchHistory().finally(() => setLoading(false))
   }, [])
 
   const handleRerunSearch = (search) => {
@@ -35,22 +39,29 @@ export default function History() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Search History</h1>
-        <p className="text-muted-foreground mt-1">
-          Review your past searches
-        </p>
+        <h1 className="text-2xl md:text-3xl font-bold">Search History</h1>
+        <p className="text-muted-foreground mt-1">Review your past searches</p>
       </div>
 
-      {searchHistory.length === 0 ? (
+      {loading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => <HistoryItemSkeleton key={i} />)}
+        </div>
+      ) : searchHistory.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center h-64">
-            <Search className="h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-lg text-muted-foreground">No search history yet</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Your searches will appear here
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+            <div className="h-16 w-16 bg-primary-500/10 rounded-full flex items-center justify-center">
+              <Search className="h-8 w-8 text-primary-500" />
+            </div>
+            <div>
+              <p className="text-lg font-medium">No search history yet</p>
+              <p className="text-sm text-muted-foreground mt-1">You haven't searched yet. Go find some leads!</p>
+            </div>
+            <Button onClick={() => navigate('/search')}>
+              <Search className="h-4 w-4 mr-2" /> Start Searching
+            </Button>
           </CardContent>
         </Card>
       ) : (

@@ -13,6 +13,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
 import { ToastProvider } from './components/ui/toast'
+import NotFound from './pages/NotFound'
 
 function App() {
   const { isAuthenticated, user, theme } = useStore()
@@ -52,8 +53,8 @@ function App() {
             <Route path="profile" element={<Profile />} />
           </Route>
 
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>

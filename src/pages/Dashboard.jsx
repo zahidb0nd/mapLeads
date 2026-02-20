@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
@@ -7,15 +7,18 @@ import { Search, Building2, TrendingUp, Clock, Bookmark } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import useStore from '@/stores/useStore'
 import { format } from 'date-fns'
+import { usePageTitle } from '@/hooks/usePageTitle'
+import { StatSkeleton } from '@/components/ui/skeleton'
 
 const PIE_COLORS = ['#7C3AED', '#6D28D9', '#A78BFA', '#4C1D95', '#DDD6FE', '#5B21B6']
 
 export default function Dashboard() {
   const { stats, loadStats, searchHistory, loadSearchHistory, savedSearches } = useStore()
+  const [loading, setLoading] = useState(true)
+  usePageTitle('Dashboard')
 
   useEffect(() => {
-    loadStats()
-    loadSearchHistory()
+    Promise.all([loadStats(), loadSearchHistory()]).finally(() => setLoading(false))
   }, [])
 
   // Bar chart — results per search (last 7)
@@ -47,6 +50,9 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+      {loading ? (
+        <><StatSkeleton /><StatSkeleton /><StatSkeleton /><StatSkeleton /></>
+      ) : (<>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs md:text-sm font-medium">Total Searches</CardTitle>
@@ -92,6 +98,7 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">Quick access</p>
           </CardContent>
         </Card>
+      </>)}
       </div>
 
       {/* Charts Row */}

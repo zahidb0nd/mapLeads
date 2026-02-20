@@ -1,18 +1,69 @@
-import { Grid, List } from 'lucide-react'
+import { Grid, List, SearchX, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CardSkeleton } from '@/components/ui/skeleton'
 import BusinessCard from './BusinessCard'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import useStore from '@/stores/useStore'
 
 export default function BusinessList({ businesses = [], onBusinessClick }) {
-  const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid')
+  const navigate = useNavigate()
+  const { isSearching, searchResults, filterByPhone } = useStore()
 
+  // Show skeletons while searching
+  if (isSearching) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+      </div>
+    )
+  }
+
+  // Never searched yet
+  if (businesses.length === 0 && searchResults.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+        <div className="h-16 w-16 bg-primary-500/10 rounded-full flex items-center justify-center">
+          <MapPin className="h-8 w-8 text-primary-500" />
+        </div>
+        <div>
+          <p className="text-lg font-medium">You haven't searched yet</p>
+          <p className="text-sm text-muted-foreground mt-1">Go find some leads! Enter a city and business type above.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Filtered to zero but results exist
+  if (businesses.length === 0 && searchResults.length > 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+        <div className="h-16 w-16 bg-yellow-500/10 rounded-full flex items-center justify-center">
+          <SearchX className="h-8 w-8 text-yellow-500" />
+        </div>
+        <div>
+          <p className="text-lg font-medium">No results match your filters</p>
+          <p className="text-sm text-muted-foreground mt-1">Try removing the "Has Phone" filter or changing the sort order.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Zero results from API
   if (businesses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <p className="text-muted-foreground text-lg">No businesses found</p>
-        <p className="text-muted-foreground text-sm mt-2">
-          Try adjusting your search criteria or location
-        </p>
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+        <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center">
+          <SearchX className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <div>
+          <p className="text-lg font-medium">No businesses found without a website</p>
+          <p className="text-sm text-muted-foreground mt-1">Try a different city, category, or increase the search radius.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => document.getElementById('location')?.focus()}>
+          Adjust Search
+        </Button>
       </div>
     )
   }

@@ -10,6 +10,7 @@ import BusinessDetails from '@/components/business/BusinessDetails'
 import useStore from '@/stores/useStore'
 import { useToast } from '@/components/ui/toast'
 import { exportToCSV, exportToXLSX } from '@/lib/utils'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function Search() {
   const {
@@ -18,6 +19,7 @@ export default function Search() {
   } = useStore()
   const [showDetails, setShowDetails] = useState(false)
   const { success, error, warning } = useToast()
+  usePageTitle('Search')
 
   const handleBusinessClick = (business) => {
     setSelectedBusiness(business)
@@ -38,27 +40,38 @@ export default function Search() {
   }, [searchResults, sortBy, filterByPhone])
 
   const getExportData = () => searchResults.map(business => ({
-    name: business.name,
-    address: business.formatted_address || business.address || '',
-    phone: business.tel || '',
-    email: business.email || '',
-    category: business.categories?.[0]?.name || '',
-    latitude: business.latitude,
-    longitude: business.longitude,
-    distance: business.distance ? `${(business.distance / 1000).toFixed(2)} km` : '',
+    'Business Name': business.name || '',
+    'Category': business.categories?.[0]?.name || '',
+    'Address': business.formatted_address || business.address || '',
+    'Phone': business.tel || '',
+    'Email': business.email || '',
+    'Rating': business.rating || '',
+    'Review Count': business.stats?.total_ratings || '',
+    'Google Maps URL': business.latitude && business.longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`
+      : '',
+    'Latitude': business.latitude || '',
+    'Longitude': business.longitude || '',
+    'Distance': business.distance ? `${(business.distance / 1000).toFixed(2)} km` : '',
   }))
+
+  const getExportFilename = (ext) => {
+    const city = searchFilters.location
+      ? searchFilters.location.split(',')[0].trim().replace(/\s+/g, '_').toLowerCase()
+      : 'results'
+    const date = new Date().toISOString().split('T')[0]
+    return `mapleads_${city}_${date}.${ext}`
+  }
 
   const handleExportCSV = () => {
     if (searchResults.length === 0) { warning('No results', 'Run a search first.'); return }
-    const timestamp = new Date().toISOString().split('T')[0]
-    exportToCSV(getExportData(), `mapleads-${timestamp}.csv`)
+    exportToCSV(getExportData(), getExportFilename('csv'))
     success('Exported!', `${searchResults.length} businesses exported to CSV.`)
   }
 
   const handleExportXLSX = () => {
     if (searchResults.length === 0) { warning('No results', 'Run a search first.'); return }
-    const timestamp = new Date().toISOString().split('T')[0]
-    exportToXLSX(getExportData(), `mapleads-${timestamp}.xlsx`)
+    exportToXLSX(getExportData(), getExportFilename('xlsx'))
     success('Exported!', `${searchResults.length} businesses exported to Excel.`)
   }
 
