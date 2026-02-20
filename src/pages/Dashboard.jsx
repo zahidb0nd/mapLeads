@@ -6,10 +6,11 @@ import useStore from '@/stores/useStore'
 import { format } from 'date-fns'
 
 export default function Dashboard() {
-  const { stats, loadStats, searchHistory } = useStore()
+  const { stats, loadStats, searchHistory, loadSearchHistory } = useStore()
 
   useEffect(() => {
     loadStats()
+    loadSearchHistory()
   }, [])
 
   // Prepare chart data from recent searches

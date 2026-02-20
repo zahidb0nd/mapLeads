@@ -29,4 +29,6 @@ dist-ssr
 .env.production
 
 # PocketBase
-pocketbase/pb_data
+pocketbase/pb_data/
+pocketbase/*.exe
+pocketbase/*.zip

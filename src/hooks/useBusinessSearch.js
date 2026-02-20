@@ -46,16 +46,16 @@ export function useBusinessSearch() {
 
       setSearchResults(placesWithoutWebsite)
 
-      // Save to search history (temporarily disabled)
-      // await addSearchToHistory({
-      //   query: filters.query || 'All businesses',
-      //   location: filters.location,
-      //   latitude: filters.latitude,
-      //   longitude: filters.longitude,
-      //   radius: filters.radius,
-      //   categories: filters.categories,
-      //   results_count: placesWithoutWebsite.length
-      // })
+      // Save to search history
+      await addSearchToHistory({
+        query: filters.query || 'All businesses',
+        location: filters.location,
+        latitude: filters.latitude,
+        longitude: filters.longitude,
+        radius: filters.radius,
+        categories: filters.categories,
+        results_count: placesWithoutWebsite.length
+      })
 
       return placesWithoutWebsite
     } catch (err) {
