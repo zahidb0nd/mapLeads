@@ -1,0 +1,180 @@
+[
+  {
+    "name": "searches",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "query",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "latitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "longitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "radius",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "categories",
+        "type": "json",
+        "required": false
+      },
+      {
+        "name": "results_count",
+        "type": "number",
+        "required": false
+      }
+    ],
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id"
+  },
+  {
+    "name": "saved_searches",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 100
+        }
+      },
+      {
+        "name": "query",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "latitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "longitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "radius",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "categories",
+        "type": "json",
+        "required": false
+      },
+      {
+        "name": "notifications_enabled",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id"
+  },
+  {
+    "name": "businesses",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "fsq_id",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "address",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "latitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "longitude",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "categories",
+        "type": "json",
+        "required": false
+      },
+      {
+        "name": "phone",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "email",
+        "type": "email",
+        "required": false
+      },
+      {
+        "name": "raw_data",
+        "type": "json",
+        "required": false
+      }
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''"
+  }
+]
