@@ -1,33 +1,69 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import { forwardRef } from 'react'
+import { cn } from '@/lib/utils'
 
-const Button = React.forwardRef(({ className, variant = "default", size = "default", ...props }, ref) => {
-  const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-  
-  const variants = {
-    default: "bg-primary-500 text-white hover:bg-primary-600",
-    destructive: "bg-red-500 text-white hover:bg-red-600",
-    outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-    ghost: "hover:bg-accent hover:text-accent-foreground",
-    link: "text-primary-500 underline-offset-4 hover:underline",
-  }
-  
-  const sizes = {
-    default: "h-10 px-4 py-2",
-    sm: "h-9 rounded-md px-3",
-    lg: "h-11 rounded-md px-8",
-    icon: "h-10 w-10",
-  }
+const variantStyles = {
+  primary: [
+    'bg-purple-gradient text-white font-semibold',
+    'hover:shadow-purple-glow hover:scale-[1.02]',
+    'active:scale-[0.98]',
+    'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none',
+  ].join(' '),
+  secondary: [
+    'bg-bg-elevated border border-border text-text-primary',
+    'hover:border-purple hover:bg-purple-subtle',
+  ].join(' '),
+  ghost: [
+    'bg-transparent text-text-secondary',
+    'hover:text-text-primary hover:bg-bg-elevated',
+  ].join(' '),
+  danger: [
+    'bg-danger-subtle text-danger border border-danger/30',
+    'hover:bg-danger hover:text-white',
+  ].join(' '),
+  success: [
+    'bg-success-subtle text-success border border-success/30',
+    'hover:bg-success hover:text-white',
+  ].join(' '),
+  outline: [
+    'bg-transparent border border-border text-text-secondary',
+    'hover:border-purple hover:text-text-primary hover:bg-purple-subtle',
+  ].join(' '),
+}
 
+const sizeStyles = {
+  sm:   'text-sm px-3 py-2 min-h-[40px] gap-1.5',
+  md:   'text-sm px-6 py-3 min-h-[44px] gap-2',
+  lg:   'text-base px-8 py-3.5 min-h-[52px] gap-2',
+  icon: 'w-10 h-10 min-h-[40px] p-0',
+}
+
+const Button = forwardRef(function Button(
+  {
+    className,
+    variant = 'primary',
+    size = 'md',
+    fullWidth = false,
+    children,
+    ...props
+  },
+  ref
+) {
   return (
     <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
       ref={ref}
+      className={cn(
+        'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150 cursor-pointer select-none',
+        variantStyles[variant] ?? variantStyles.primary,
+        sizeStyles[size] ?? sizeStyles.md,
+        fullWidth && 'w-full',
+        className
+      )}
       {...props}
-    />
+    >
+      {children}
+    </button>
   )
 })
-Button.displayName = "Button"
 
 export { Button }
+export default Button

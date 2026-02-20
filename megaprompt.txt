@@ -1,0 +1,870 @@
+You are redesigning MapLeads from scratch with a 
+world-class, mobile-first UI/UX. This is a dark SaaS 
+app that helps users find local businesses with no 
+website. The design should feel premium, focused, 
+and psychologically engineered to make users feel 
+productive and motivated.
+
+Follow every instruction below exactly.
+
+═══════════════════════════════════════
+## 1. MOBILE-FIRST PHILOSOPHY
+═══════════════════════════════════════
+
+Build mobile first, then scale up to desktop.
+Every component must work perfectly on a 375px 
+wide screen before adding tablet/desktop styles.
+
+Breakpoints:
+- Mobile:  < 768px  (design base)
+- Tablet:  768px – 1024px
+- Desktop: > 1024px
+
+Mobile rules (non-negotiable):
+- Minimum tap target: 44px height on all 
+  interactive elements
+- Minimum font size: 16px on all inputs 
+  (prevents iOS zoom)
+- No horizontal scroll on any screen
+- Bottom navigation bar on mobile (5 items max)
+- Stack all multi-column layouts to 
+  single column on mobile
+- Full-width buttons on mobile
+- Inputs stack vertically on mobile
+- Side padding: 16px on mobile, 
+  24px tablet, 32px desktop
+
+═══════════════════════════════════════
+## 2. COLOR SYSTEM (PSYCHOLOGY-DRIVEN)
+═══════════════════════════════════════
+
+Update tailwind.config.js with these exact values:
+
+theme: {
+  extend: {
+    colors: {
+      bg: {
+        deep:     '#0A0A0F',
+        surface:  '#13111C',
+        elevated: '#1C1828',
+        hover:    '#231F35',
+      },
+      border: {
+        DEFAULT: '#2E2A45',
+        subtle:  '#1E1A30',
+        focus:   '#7C3AED',
+      },
+      purple: {
+        DEFAULT: '#7C3AED',
+        dark:    '#5B21B6',
+        light:   '#9F67FF',
+        muted:   '#4C1D95',
+        glow:    '#7C3AED33',
+        subtle:  '#7C3AED15',
+      },
+      text: {
+        primary:   '#F8F7FF',
+        secondary: '#9B8EC4',
+        muted:     '#6B6494',
+        inverse:   '#0A0A0F',
+      },
+      success: {
+        DEFAULT: '#10B981',
+        subtle:  '#10B98115',
+        dark:    '#065F46',
+      },
+      warning: {
+        DEFAULT: '#F59E0B',
+        subtle:  '#F59E0B15',
+      },
+      danger: {
+        DEFAULT: '#F43F5E',
+        subtle:  '#F43F5E15',
+      },
+    },
+    boxShadow: {
+      'purple-glow': '0 0 20px #7C3AED33',
+      'purple-glow-lg': '0 0 40px #7C3AED44',
+      'card': '0 4px 24px rgba(0,0,0,0.4)',
+      'card-hover': '0 8px 32px rgba(0,0,0,0.6)',
+    },
+    backgroundImage: {
+      'purple-gradient': 
+        'linear-gradient(135deg, #7C3AED, #5B21B6)',
+      'card-gradient': 
+        'linear-gradient(145deg, #13111C, #1C1828)',
+      'hero-glow': 
+        'radial-gradient(ellipse at 50% 0%, #7C3AED22 0%, transparent 70%)',
+    },
+    fontFamily: {
+      sans: ['Inter', 'system-ui', 'sans-serif'],
+    },
+  }
+}
+
+Psychology rules for color usage:
+- Purple → authority, premium, ambition 
+  (CTAs, active states, logo)
+- Green (#10B981) → money, growth, success 
+  (result counts, found businesses, export success)
+- Amber (#F59E0B) → attention, urgency without panic 
+  (free tier limits, saved items, ratings)
+- Rose (#F43F5E) → danger, stop 
+  (errors and destructive actions ONLY)
+- Deep dark backgrounds → focus, sophistication
+- Purple-tinted text secondary → 
+  cohesive, intentional, premium
+
+═══════════════════════════════════════
+## 3. TYPOGRAPHY
+═══════════════════════════════════════
+
+Import Inter from Google Fonts in index.html:
+weights: 400, 500, 600, 700, 800
+
+Scale:
+- Display:  text-4xl (mobile) → text-6xl (desktop), 
+  font-800, text-text-primary
+- H1:       text-2xl → text-4xl, font-700
+- H2:       text-xl → text-2xl, font-600
+- H3:       text-lg → text-xl, font-600
+- Body:     text-base, font-400, text-text-secondary
+- Small:    text-sm, text-text-muted
+- Label:    text-xs, font-600, uppercase, 
+  tracking-widest, text-text-muted
+- Number (stats): text-3xl → text-4xl, 
+  font-800, text-text-primary
+
+═══════════════════════════════════════
+## 4. GLOBAL COMPONENT STYLES
+═══════════════════════════════════════
+
+Cards:
+  background: bg-card-gradient
+  border: 1px solid border-DEFAULT
+  border-radius: rounded-2xl
+  padding: p-4 (mobile) → p-6 (desktop)
+  transition: all 200ms ease
+  hover: border-purple-DEFAULT shadow-purple-glow 
+         translateY(-2px)
+  backdrop-filter: blur(8px)
+
+Buttons - Primary:
+  bg-purple-gradient
+  text-white font-semibold
+  rounded-xl
+  px-6 py-3 (min-h-11)
+  hover: shadow-purple-glow scale-[1.02]
+  active: scale-[0.98]
+  disabled: opacity-50 cursor-not-allowed
+  width: w-full (mobile) → w-auto (desktop)
+  transition: all 150ms ease
+
+Buttons - Secondary:
+  bg-bg-elevated
+  border border-border-DEFAULT
+  text-text-primary
+  rounded-xl px-6 py-3
+  hover: border-purple-DEFAULT bg-purple-subtle
+
+Buttons - Ghost:
+  bg-transparent
+  text-text-secondary
+  hover: text-text-primary bg-bg-elevated
+
+Buttons - Danger:
+  bg-danger-subtle
+  text-danger-DEFAULT
+  border border-danger-DEFAULT/30
+  hover: bg-danger-DEFAULT text-white
+
+Inputs:
+  bg-bg-elevated
+  border border-border-DEFAULT
+  text-text-primary
+  rounded-xl px-4 py-3
+  min-h-11
+  placeholder: text-text-muted
+  focus: border-border-focus 
+         ring-2 ring-purple-glow outline-none
+  transition: all 150ms ease
+
+Badges:
+  Purple: bg-purple-subtle text-purple-light 
+          rounded-full px-3 py-1 text-xs font-600
+  Green:  bg-success-subtle text-success-DEFAULT
+  Amber:  bg-warning-subtle text-warning-DEFAULT
+  Red:    bg-danger-subtle text-danger-DEFAULT
+
+Skeleton loaders:
+  bg-bg-elevated rounded-xl
+  animate-pulse
+  shimmer: background linear-gradient 
+  from bg-elevated via bg-hover to bg-elevated
+  background-size: 200% 100%
+  animate: shimmer 1.5s infinite
+
+Toast notifications (bottom-right, mobile: bottom-center):
+  bg-bg-surface border-l-4
+  rounded-xl shadow-card
+  Success: border-success-DEFAULT
+  Error:   border-danger-DEFAULT
+  Info:    border-purple-DEFAULT
+  Auto-dismiss: 3 seconds
+  Animate: slide in from right (desktop) 
+           slide up from bottom (mobile)
+
+═══════════════════════════════════════
+## 5. NAVIGATION
+═══════════════════════════════════════
+
+### Mobile (< 768px): Bottom Tab Bar
+  Fixed bottom, bg-bg-surface, 
+  border-t border-border-DEFAULT
+  5 tabs: Dashboard, Search, History, 
+          Saved, Profile
+  Each tab: icon + label (text-xs)
+  Active: text-purple-DEFAULT, 
+          icon has purple-subtle background pill
+  Inactive: text-text-muted
+  Height: 64px + safe area inset bottom
+  No sidebar on mobile
+
+### Tablet (768px – 1024px): Icon Sidebar
+  Fixed left, width: 64px
+  bg-bg-surface border-r border-border-DEFAULT
+  Icons only, tooltips on hover
+  Active: purple-subtle background + 
+          purple-DEFAULT icon color
+
+### Desktop (> 1024px): Full Sidebar
+  Fixed left, width: 240px
+  bg-bg-surface border-r border-border-DEFAULT
+  
+  Top section:
+    Logo mark + "MapLeads" wordmark
+    Purple gradient on the M icon
+  
+  Nav items (with icons from lucide-react):
+    LayoutDashboard  → Dashboard
+    Search           → Search
+    Clock            → History
+    Bookmark         → Saved Searches
+    Settings         → Settings
+  
+  Active item:
+    bg-purple-subtle
+    text-purple-light
+    border-l-2 border-purple-DEFAULT
+    rounded-r-xl (right side only)
+  
+  Inactive item:
+    text-text-muted
+    hover: bg-bg-elevated text-text-primary
+  
+  Bottom of sidebar:
+    User avatar (circle, initials fallback)
+    Name + email (truncated)
+    Sign out button (ghost, red on hover)
+
+### Top Bar (tablet + desktop):
+  Height: 64px
+  bg-bg-surface/80 backdrop-blur-lg
+  border-b border-border-subtle
+  Sticky top
+  Left: current page title (H2)
+  Right: notification bell + user avatar dropdown
+  Avatar dropdown: 
+    Profile, Upgrade to Pro, Sign out
+
+═══════════════════════════════════════
+## 6. ANIMATED BACKGROUND
+═══════════════════════════════════════
+
+On all pages, add a subtle animated background:
+  Fixed position, z-index: -1, pointer-events: none
+  
+  Three orbs:
+  Orb 1: width 600px, height 600px
+    background: radial-gradient(circle, 
+      #7C3AED22, transparent 70%)
+    top: -200px, left: -200px
+    animation: float1 20s infinite ease-in-out
+  
+  Orb 2: width 400px, height 400px  
+    background: radial-gradient(circle, 
+      #5B21B622, transparent 70%)
+    bottom: -100px, right: -100px
+    animation: float2 25s infinite ease-in-out
+  
+  Orb 3: width 300px, height 300px
+    background: radial-gradient(circle, 
+      #9F67FF15, transparent 70%)
+    top: 50%, left: 50%
+    animation: float3 30s infinite ease-in-out
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) }
+    33%  { transform: translate(30px, -30px) }
+    66%  { transform: translate(-20px, 20px) }
+  }
+  (similar for float2 and float3 with 
+  different translate values)
+
+  On mobile: reduce orb sizes by 50% for performance
+
+═══════════════════════════════════════
+## 7. LOGIN / REGISTER PAGE
+═══════════════════════════════════════
+
+Layout: centered card, full height screen, 
+        bg-bg-deep with animated orbs
+
+Card:
+  Mobile: full screen (no card, just content)
+  Desktop: max-w-md, bg-bg-surface, 
+           rounded-2xl, shadow-card, p-8
+
+Top of card:
+  Purple gradient circle logo mark (48px)
+  "MapLeads" in text-text-primary font-800 text-2xl
+  Tagline: "Find businesses with no website. 
+             Turn them into clients."
+  text-text-secondary text-sm text-center
+
+Form:
+  Label above each input (text-xs uppercase tracking)
+  Email input with Mail icon inside
+  Password input with Lock icon + 
+    toggle show/hide password (Eye/EyeOff icon)
+  
+  Login: 
+    "Sign In" primary button (full width)
+    "Forgot password?" ghost link (right aligned)
+    Divider: "or"
+    Switch to register link
+  
+  Register:
+    Name input with User icon
+    Email + Password inputs
+    "Create Account" primary button (full width)
+    Switch to login link
+    By creating an account you agree to our 
+    Terms of Service and Privacy Policy 
+    (text-xs text-text-muted with links)
+
+Error state:
+  Red border on input
+  Small error message below input 
+  in text-danger-DEFAULT text-sm
+  Shake animation on wrong password
+
+Loading state:
+  Button shows spinner + "Signing in..." text
+  Inputs disabled
+
+═══════════════════════════════════════
+## 8. DASHBOARD PAGE
+═══════════════════════════════════════
+
+### Greeting Header
+  Mobile: "Good morning 👋" (text-xl font-700)
+          "[First name]" on second line
+  Desktop: "Good morning, [First name] 👋" 
+           inline, text-3xl
+  Below: "You've found [X] businesses 
+          without a website so far." 
+         text-text-secondary
+
+### Stat Cards Row
+  Mobile: 2x2 grid (2 columns)
+  Desktop: 4 columns
+
+  Card 1 — Total Searches
+    Icon: Search (purple icon in 
+          purple-subtle rounded-xl bg)
+    Number: animated count-up on load
+    Label: "Total Searches"
+    Sparkline: mini 7-day line chart 
+               (purple, no axes)
+    Change badge: +12% (green if up, red if down)
+
+  Card 2 — Businesses Found
+    Icon: Building2 (GREEN icon — 
+          signals money and opportunity)
+    Number: animated count-up, 
+            text-success-DEFAULT color
+    Label: "Businesses Found"
+    Sparkline: green line
+    Change badge
+
+  Card 3 — Saved Searches
+    Icon: Bookmark (amber icon)
+    Number: count-up
+    Label: "Saved Searches"
+    Change badge
+
+  Card 4 — Today's Searches
+    Icon: Zap (purple icon)
+    Number: count-up
+    Label: "Today"
+    Sub-label: free tier limit indicator 
+    "3 of 5 used" with mini progress bar
+    (amber when > 60% used, 
+     red when at limit)
+
+### Charts Section
+  Mobile: stacked (area chart then donut)
+  Desktop: 2 columns (2/3 area + 1/3 donut)
+
+  Area Chart (searches over 30 days):
+    Use Recharts AreaChart
+    Purple gradient fill: 
+      from #7C3AED at top to transparent
+    Smooth curved line (type="monotone")
+    No harsh grid: only horizontal 
+      dotted lines in border-subtle color
+    X axis: dates, text-text-muted, text-xs
+    Y axis: hidden on mobile, 
+             visible on desktop
+    Custom tooltip: 
+      bg-bg-surface border border-border
+      rounded-xl p-3 shadow-card
+      Shows date + search count
+
+  Donut Chart (results by category):
+    Use Recharts PieChart with innerRadius
+    Colors: #7C3AED, #9F67FF, #C4A7FF, 
+            #10B981, #F59E0B
+    Centre label: total businesses found
+    Legend: below chart on mobile, 
+             right side on desktop
+    Custom tooltip same style as area chart
+
+### Recent Searches
+  Section title: "Recent Searches" 
+  Right: "View all" link to history page
+
+  Mobile: vertical list of cards
+  Desktop: table with columns:
+    Location | Category | Found | Date | Action
+
+  Each item:
+    Location with MapPin icon
+    Category badge (purple pill) or 
+      "All categories" if none
+    Found count in text-success-DEFAULT 
+      with Building2 icon
+    Relative date ("2 hours ago", "Yesterday")
+    Re-run button (RefreshCw icon, ghost button)
+
+  Empty state:
+    Clock icon (large, muted)
+    "No searches yet"
+    "Start by searching for a city below"
+    "Go to Search" primary button
+
+### Quick Saved Searches
+  Section title: "Saved Searches"
+  Right: "Manage" link
+
+  Mobile: horizontal scroll row of cards
+  Desktop: 3 column grid
+
+  Each card:
+    Bookmark icon (amber)
+    Search name (bold)
+    Location + category (small, muted)
+    Last run date
+    "Re-run" button (small, ghost)
+
+═══════════════════════════════════════
+## 9. SEARCH PAGE
+═══════════════════════════════════════
+
+### Hero Search Section
+  bg-hero-glow (purple radial glow at top)
+  
+  Title (mobile: text-xl, desktop: text-3xl):
+    "Find businesses with no website"
+  Subtitle: "Search any city, locality 
+              or neighbourhood"
+
+  Search bar:
+    Mobile: stacked inputs + full-width button
+    Desktop: single row — 
+             location input | category input | 
+             search button
+
+    Location input:
+      MapPin icon inside (purple)
+      Placeholder: "City, town or locality..."
+      Large: h-14 on desktop
+      rounded-xl (mobile) 
+      rounded-l-xl (desktop, left side of row)
+
+    Category input:
+      Tag icon inside
+      Placeholder: "Business type (optional)..."
+      rounded-xl (mobile)
+      rounded-none (desktop, middle)
+
+    Search button:
+      "Search" + Search icon
+      bg-purple-gradient
+      h-14 (desktop)
+      rounded-xl (mobile, full width)
+      rounded-r-xl (desktop)
+      Loading state: spinner + "Searching..."
+      Pulse animation while loading
+
+  Quick category pills (below search bar):
+    Horizontal scroll row (mobile)
+    Wrap (desktop)
+    Pills: All | Restaurants | Salons | 
+           Plumbers | Shops | Hotels | Gyms
+    Active: bg-purple-DEFAULT text-white
+    Inactive: bg-bg-elevated text-text-secondary
+              border border-border
+    Each pill has a relevant emoji prefix
+
+### Filter Bar
+  Mobile: hidden behind "Filters" button 
+          (SlidersHorizontal icon)
+          Opens as bottom sheet/drawer 
+          with close button
+  Desktop: horizontal bar below search, 
+           always visible
+
+  Filters:
+    Min Rating: star rating selector 
+      (click to select 1-5 stars, amber color)
+    Min Reviews: number input
+    Sort by: dropdown 
+      (Most Reviews | Highest Rating | 
+       Alphabetical)
+    
+  Mobile filter drawer:
+    Full-width bottom sheet
+    Slides up with smooth animation
+    Dark overlay behind
+    "Apply Filters" primary button at bottom
+    "Reset" ghost button
+
+### Results Header
+  Shows after search completes:
+  
+  Left: "Found [X] businesses with no website"
+        text-success-DEFAULT font-700 text-lg
+        Building2 icon before text
+  
+  Right: 
+    Grid/Table toggle (LayoutGrid / Table2 icons)
+    Export CSV button 
+      (Download icon + "Export CSV" text)
+      bg-success-subtle text-success-DEFAULT
+      border border-success-DEFAULT/30
+
+### Results Grid View
+  Mobile: 1 column
+  Tablet: 2 columns
+  Desktop: 3 columns
+
+  Business card:
+    bg-card-gradient border border-border
+    rounded-2xl p-4 (mobile) p-5 (desktop)
+    hover: border-purple-DEFAULT 
+           shadow-purple-glow translateY(-2px)
+    
+    Top row:
+      Building2 icon (purple, bg-purple-subtle 
+                      rounded-lg p-2)
+      Business name (font-700 text-text-primary)
+      No-website badge: Globe icon with X, 
+        bg-success-subtle text-success-DEFAULT
+        rounded-full text-xs
+
+    Category badge (purple pill, text-xs)
+
+    Info rows (icon + text, text-sm text-text-secondary):
+      MapPin + address (truncated to 1 line)
+      Phone + phone number (or "No phone listed")
+      Star (amber) + rating + "(X reviews)"
+
+    Bottom row:
+      Google Maps link button 
+        (ExternalLink icon, ghost, text-xs)
+      Save lead button 
+        (Bookmark icon, ghost, amber on hover)
+
+### Results Table View
+  Mobile: hidden, show message 
+    "Switch to grid view on mobile"
+  Desktop only
+
+  Columns (sortable with ChevronUp/Down icons):
+    Business Name | Category | Address | 
+    Phone | Rating | Reviews | Actions
+
+  Row styles:
+    Height: 56px
+    Border-bottom: border-border-subtle
+    Hover: bg-purple-subtle
+    Business name: font-600 text-text-primary
+    Category: purple badge
+    Rating: amber stars inline
+    Actions: MapPin icon button + 
+             Bookmark icon button
+
+### Loading State
+  Skeleton cards (same layout as result cards)
+  Mobile: 3 skeleton cards stacked
+  Desktop: 6 skeleton cards in grid
+  Animated shimmer effect
+
+### Empty States
+  No results:
+    SearchX icon (large, text-text-muted)
+    "No businesses found without a website"
+    "Try a nearby city or different category"
+    Two buttons: "Try nearby city" | "Clear filters"
+
+  Error:
+    WifiOff icon
+    "Search unavailable right now"
+    "Retry" button
+
+  Not searched yet:
+    Map icon with purple glow
+    "Enter a city above to start finding leads"
+
+### Floating Export Button (mobile)
+  Fixed bottom-right (above bottom nav)
+  Circular FAB button
+  bg-success-DEFAULT shadow-lg
+  Download icon (white)
+  Only visible when results are showing
+
+═══════════════════════════════════════
+## 10. SEARCH HISTORY PAGE
+═══════════════════════════════════════
+
+Header:
+  Title: "Search History"
+  Right: "Clear all" button 
+    (ghost, danger color, with confirmation)
+
+Mobile — Card List:
+  Each history card:
+    Top row: location (font-600) + date (muted, right)
+    Second row: category badge + 
+      result count (green) with Building2 icon
+    Bottom row: Re-run button (full width, 
+      secondary style)
+  Cards separated by 8px gap
+
+Desktop — Table:
+  Checkbox column (bulk select)
+  Location | Category | Found | Date | Actions
+  Bulk delete bar appears above table 
+    when items selected:
+    "X selected" + "Delete selected" 
+    danger button
+
+Empty state:
+  Clock icon (large muted)
+  "No search history yet"
+  "Your searches will appear here"
+  "Start Searching" primary button
+
+═══════════════════════════════════════
+## 11. SAVED SEARCHES PAGE
+═══════════════════════════════════════
+
+Header:
+  Title: "Saved Searches"
+  Right: search count badge (amber)
+
+Mobile: 1 column card list
+Tablet: 2 column grid
+Desktop: 3 column grid
+
+Each saved search card:
+  Top: Bookmark icon (amber) + 
+       card menu (3 dots → Rename, Delete)
+  Name: font-700 text-text-primary text-lg
+  Location row: MapPin icon + location text
+  Category row: Tag icon + category badge 
+    or "All categories"
+  Last run: "Last run: 2 days ago" 
+            Clock icon, text-text-muted text-sm
+  Bottom: "Re-run Search" primary button 
+    (full width, with RefreshCw icon)
+    Loading state while fetching
+
+Empty state:
+  Bookmark icon (large, amber, muted)
+  "No saved searches yet"
+  "Save a search to quickly re-run it anytime"
+  "Go to Search" primary button
+
+═══════════════════════════════════════
+## 12. PROFILE / SETTINGS PAGE
+═══════════════════════════════════════
+
+Mobile: full screen scroll
+Desktop: centered max-w-2xl
+
+Sections (each in a card):
+
+Account Information:
+  User avatar (large circle, 
+    initials or uploaded photo)
+  "Change photo" text button below
+  Name input
+  Email input (read-only if using 
+    email auth — show lock icon)
+  "Save Changes" primary button
+
+Change Password:
+  Current password input
+  New password input with strength meter:
+    4 colored bars below input
+    Weak: 1 red bar
+    Fair: 2 amber bars
+    Strong: 3 green bars
+    Very strong: 4 green bars
+  Confirm new password input
+  "Update Password" button
+
+Plan & Usage:
+  Current plan badge (Free/Pro)
+  Usage this month: 
+    Progress bar showing searches used
+    "15 of unlimited" (Pro) or 
+    "3 of 5" (Free, amber/red when near limit)
+  "Upgrade to Pro" button 
+    (purple gradient, if on free plan)
+
+Danger Zone:
+  Red-bordered card
+  "Delete Account" heading text-danger-DEFAULT
+  Warning text (small, muted)
+  "Delete my account" danger button
+  Confirmation modal: 
+    type "DELETE" to confirm
+
+═══════════════════════════════════════
+## 13. MICRO-INTERACTIONS & ANIMATIONS
+═══════════════════════════════════════
+
+Install framer-motion and use throughout:
+
+Page transitions:
+  Each page: opacity 0→1, y 16px→0
+  Duration: 300ms ease-out
+  Stagger children: 50ms delay each
+
+Stat card numbers:
+  Count up from 0 to final value
+  Duration: 1000ms ease-out
+  Start when card enters viewport 
+  (use IntersectionObserver)
+
+Button interactions:
+  Hover: scale(1.02) 150ms
+  Active/Press: scale(0.97) 100ms
+  All buttons: transition-all duration-150
+
+Card hover:
+  translateY(-2px) + shadow-purple-glow
+  border-color → purple-DEFAULT
+  Duration: 200ms ease
+
+Search button while loading:
+  Shimmer sweep animation 
+    across button background
+  Spinner replaces search icon
+
+Result cards entering:
+  Stagger fade-in + slide-up
+  50ms delay between each card
+  Duration: 300ms per card
+
+Bottom tab bar (mobile):
+  Active tab icon: 
+    bounce animation on select
+    scale 1→1.2→1, 200ms
+
+Toast notifications:
+  Enter: slide in from right (desktop) 
+         or slide up from bottom (mobile)
+  Exit: fade out + slide back
+  Progress bar showing time remaining
+
+Number badges:
+  When count changes: 
+    brief scale-up pulse
+
+═══════════════════════════════════════
+## 14. PERFORMANCE
+═══════════════════════════════════════
+
+- Lazy load all page components 
+  (React.lazy + Suspense)
+- Skeleton loaders for ALL async data
+- Debounce search input by 300ms
+- Memoize expensive components 
+  with React.memo and useMemo
+- Images: use loading="lazy" attribute
+- Reduce animated orb size on mobile 
+  for battery/performance
+- Use CSS transforms only for animations 
+  (not top/left/width/height)
+- Prefetch next likely route on hover
+
+═══════════════════════════════════════
+## 15. ACCESSIBILITY
+═══════════════════════════════════════
+
+- All interactive elements: visible focus ring
+  (outline: 2px solid #7C3AED, offset: 2px)
+- Color contrast: minimum 4.5:1 for all text
+- All icons: aria-label or aria-hidden 
+  if decorative
+- Form inputs: associated <label> elements
+- Error messages: aria-describedby linked to input
+- Modal/drawer: focus trap while open
+- Skip to main content link (first focusable element)
+- Reduced motion: respect 
+  prefers-reduced-motion media query
+  Wrap all framer-motion animations:
+  const prefersReducedMotion = 
+    window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+
+═══════════════════════════════════════
+## 16. FINAL CHECKLIST
+═══════════════════════════════════════
+
+After implementing everything above, verify:
+- [ ] No horizontal scroll on 375px width
+- [ ] All tap targets minimum 44px
+- [ ] No font size below 16px on inputs
+- [ ] Bottom nav works on all mobile pages
+- [ ] Sidebar visible only on desktop
+- [ ] All loading states implemented
+- [ ] All empty states implemented  
+- [ ] All error states implemented
+- [ ] Animated background on all pages
+- [ ] framer-motion page transitions working
+- [ ] Count-up animation on stat cards
+- [ ] CSV export working and tested
+- [ ] Dark theme consistent across all pages
+- [ ] Purple glow on card hover working
+- [ ] Toast notifications working
+- [ ] No console errors or warnings
+
+Report back with a complete list of every 
+file created and modified.

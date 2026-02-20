@@ -1,51 +1,65 @@
 import { cn } from '@/lib/utils'
 
-export function Skeleton({ className, ...props }) {
+function Skeleton({ className, ...props }) {
   return (
     <div
-      className={cn('animate-pulse rounded-md bg-muted', className)}
+      className={cn('skeleton rounded-xl', className)}
       {...props}
     />
   )
 }
 
-export function CardSkeleton() {
+function BusinessCardSkeleton() {
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-      <Skeleton className="h-5 w-2/3" />
-      <Skeleton className="h-4 w-1/3" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-4/5" />
-      <Skeleton className="h-9 w-full mt-2" />
-    </div>
-  )
-}
-
-export function StatSkeleton() {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-2">
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-8 w-1/3" />
-      <Skeleton className="h-3 w-2/3" />
-    </div>
-  )
-}
-
-export function HistoryItemSkeleton() {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-      <div className="flex justify-between">
-        <Skeleton className="h-5 w-1/3" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-8" />
+    <div className="rounded-2xl border p-5 bg-card-gradient" style={{ borderColor: '#2E2A45' }}>
+      <div className="flex items-start gap-3 mb-4">
+        <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/3" />
         </div>
       </div>
-      <Skeleton className="h-4 w-1/2" />
+      <div className="space-y-2 mb-4">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-2/3" />
+        <Skeleton className="h-3 w-1/2" />
+      </div>
       <div className="flex gap-2">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-9 w-1/2" />
+        <Skeleton className="h-9 w-1/2" />
       </div>
     </div>
   )
 }
+
+function StatCardSkeleton() {
+  return (
+    <div className="rounded-2xl border p-5 bg-card-gradient" style={{ borderColor: '#2E2A45' }}>
+      <div className="flex items-center gap-3 mb-3">
+        <Skeleton className="w-10 h-10 rounded-lg" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="h-8 w-16 mb-2" />
+      <Skeleton className="h-3 w-20" />
+    </div>
+  )
+}
+
+function HistoryItemSkeleton() {
+  return (
+    <div className="rounded-2xl border p-5 bg-card-gradient" style={{ borderColor: '#2E2A45' }}>
+      <div className="flex justify-between mb-3">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <div className="flex gap-2 mb-3">
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+    </div>
+  )
+}
+
+export { Skeleton, BusinessCardSkeleton, StatCardSkeleton, HistoryItemSkeleton }
+export default Skeleton

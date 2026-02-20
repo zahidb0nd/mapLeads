@@ -1,62 +1,121 @@
-import { Sun, Moon, LogOut, User, MapPin } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
-import useStore from '@/stores/useStore'
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Bell, User, ChevronDown, Settings, LogOut, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useToast } from '@/components/ui/toast'
+import useStore from '@/stores/useStore'
+
+const pageTitles = {
+  '/dashboard':      'Dashboard',
+  '/search':         'Search',
+  '/history':        'History',
+  '/saved-searches': 'Saved Searches',
+  '/profile':        'Profile & Settings',
+}
+
+function getInitials(name, email) {
+  if (name) return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  if (email) return email[0].toUpperCase()
+  return 'U'
+}
 
 export default function Header() {
-  const { user, theme, setTheme } = useStore()
+  const { user } = useStore()
   const { logout } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
-  const { success } = useToast()
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const title = pageTitles[location.pathname] || 'MapLeads'
 
   const handleLogout = async () => {
-    try {
-      await logout()
-      success('Logged out', 'See you next time!')
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
+    setDropdownOpen(false)
+    await logout()
+    navigate('/login')
   }
 
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
-
   return (
-    <header className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-card border-b border-border">
-      {/* Logo — visible on mobile (sidebar hidden) */}
-      <div className="flex items-center space-x-2 md:hidden">
-        <MapPin className="h-6 w-6 text-primary-500" />
-        <span className="text-lg font-bold text-primary-500">MapLeads</span>
-      </div>
-      <div className="hidden md:block" />
+    <header
+      className="sticky top-0 z-30 flex items-center justify-between h-16 px-6 border-b"
+      style={{
+        background: 'rgba(19, 17, 28, 0.8)',
+        backdropFilter: 'blur(12px)',
+        borderColor: '#1E1A30',
+      }}
+    >
+      {/* Page title */}
+      <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
 
-      <div className="flex items-center space-x-2">
-        {/* Theme toggle */}
-        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-
-        {/* User info — hidden on mobile (profile in bottom nav) */}
+      {/* Right actions */}
+      <div className="flex items-center gap-3">
+        {/* Notification bell */}
         <button
-          onClick={() => navigate('/profile')}
-          className="hidden md:flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-all"
+          aria-label="Notifications"
         >
-          <div className="h-8 w-8 bg-primary-500 rounded-full flex items-center justify-center">
-            <User className="h-4 w-4 text-white" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-medium leading-tight">{user?.name || user?.email}</p>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
-          </div>
+          <Bell className="h-5 w-5" aria-hidden="true" />
         </button>
 
-        {/* Logout */}
-        <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
-          <LogOut className="h-5 w-5" />
-        </Button>
+        {/* Avatar dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-bg-elevated transition-all min-h-[44px]"
+            aria-haspopup="true"
+            aria-expanded={dropdownOpen}
+          >
+            <div
+              className="rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+              style={{
+                width: 32,
+                height: 32,
+                background: 'linear-gradient(135deg, #7C3AED, #5B21B6)',
+              }}
+            >
+              {getInitials(user?.name, user?.email)}
+            </div>
+            <ChevronDown className="h-4 w-4 text-text-muted" aria-hidden="true" />
+          </button>
+
+          {dropdownOpen && (
+            <>
+              {/* Backdrop */}
+              <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+              {/* Dropdown */}
+              <div
+                className="absolute right-0 top-full mt-2 w-52 rounded-2xl border shadow-card z-20 py-2 animate-slideUp"
+                style={{ background: '#13111C', borderColor: '#2E2A45' }}
+              >
+                <div className="px-4 py-3 border-b" style={{ borderColor: '#2E2A45' }}>
+                  <p className="text-sm font-semibold text-text-primary truncate">{user?.name || 'User'}</p>
+                  <p className="text-xs text-text-muted truncate">{user?.email}</p>
+                </div>
+                <button
+                  onClick={() => { navigate('/profile'); setDropdownOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors min-h-[40px]"
+                >
+                  <User className="h-4 w-4" aria-hidden="true" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => { navigate('/profile'); setDropdownOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors min-h-[40px]"
+                >
+                  <Zap className="h-4 w-4 text-warning" aria-hidden="true" />
+                  Upgrade to Pro
+                </button>
+                <div className="border-t my-1" style={{ borderColor: '#2E2A45' }} />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-danger hover:bg-danger-subtle transition-colors min-h-[40px]"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   )
 }
-

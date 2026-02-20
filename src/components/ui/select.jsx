@@ -1,20 +1,23 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import { forwardRef } from 'react'
+import { cn } from '@/lib/utils'
 
-const Select = React.forwardRef(({ className, children, ...props }, ref) => {
+const Select = forwardRef(function Select({ className, children, ...props }, ref) {
   return (
     <select
+      ref={ref}
       className={cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        'w-full rounded-xl border border-border bg-bg-elevated text-text-primary',
+        'px-4 py-3 min-h-[44px] text-base transition-all duration-150 outline-none',
+        'focus:border-purple focus:ring-2 focus:ring-purple-glow',
+        'cursor-pointer',
         className
       )}
-      ref={ref}
       {...props}
     >
       {children}
     </select>
   )
 })
-Select.displayName = "Select"
 
 export { Select }
+export default Select

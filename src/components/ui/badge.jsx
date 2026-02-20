@@ -1,26 +1,27 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
-const Badge = React.forwardRef(({ className, variant = "default", ...props }, ref) => {
-  const variants = {
-    default: "bg-primary-500 text-white hover:bg-primary-600",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-    destructive: "bg-red-500 text-white hover:bg-red-600",
-    outline: "border border-input bg-background hover:bg-accent",
-  }
+const variantStyles = {
+  purple:  'bg-purple-subtle text-purple-light',
+  green:   'bg-success-subtle text-success',
+  amber:   'bg-warning-subtle text-warning',
+  red:     'bg-danger-subtle text-danger',
+  default: 'bg-bg-elevated text-text-secondary border border-border',
+}
 
+function Badge({ className, variant = 'purple', children, ...props }) {
   return (
-    <div
-      ref={ref}
+    <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        variants[variant],
+        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
+        variantStyles[variant] ?? variantStyles.default,
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </span>
   )
-})
-Badge.displayName = "Badge"
+}
 
 export { Badge }
+export default Badge
