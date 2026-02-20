@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Search as SearchIcon, MapPin, Loader2, RefreshCw, AlertCircle, Tag } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Search as SearchIcon, MapPin, Loader2, RefreshCw, AlertCircle, Tag, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -15,6 +15,20 @@ const RADIUS_OPTIONS = [
   { value: 25000, label: '25 km' },
 ]
 
+// Format a Nominatim result into a short, readable label
+function formatSuggestion(item) {
+  const a = item.address || {}
+  const parts = [
+    a.suburb || a.neighbourhood || a.village || a.town || a.city_district,
+    a.city || a.town || a.county,
+    a.state,
+    a.country,
+  ].filter(Boolean)
+  // Deduplicate consecutive identical parts
+  const deduped = parts.filter((p, i) => p !== parts[i - 1])
+  return deduped.slice(0, 4).join(', ')
+}
+
 export default function SearchForm({ onSearchComplete }) {
   const { searchFilters, setSearchFilters } = useStore()
   const { search, isLoading, error } = useBusinessSearch()
@@ -24,6 +38,87 @@ export default function SearchForm({ onSearchComplete }) {
   const [localLocation, setLocalLocation] = useState(searchFilters.location || '')
   const [geolocating,   setGeolocating]   = useState(false)
   const [lastSubmit,    setLastSubmit]     = useState(null)
+
+  // Autocomplete state
+  const [suggestions,      setSuggestions]      = useState([])
+  const [showSuggestions,  setShowSuggestions]  = useState(false)
+  const [suggestLoading,   setSuggestLoading]   = useState(false)
+  const [activeSuggestion, setActiveSuggestion] = useState(-1)
+  const debounceRef = useRef(null)
+  const wrapperRef  = useRef(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Fetch suggestions with debounce
+  const fetchSuggestions = useCallback((value) => {
+    clearTimeout(debounceRef.current)
+    if (value.trim().length < 2) { setSuggestions([]); setShowSuggestions(false); return }
+    // Skip if it looks like coordinates
+    if (/^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(value.trim())) { setSuggestions([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setSuggestLoading(true)
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(value)}&limit=6`)
+        const data = await res.json()
+        if (Array.isArray(data) && data.length > 0) {
+          setSuggestions(data)
+          setShowSuggestions(true)
+          setActiveSuggestion(-1)
+        } else {
+          setSuggestions([])
+          setShowSuggestions(false)
+        }
+      } catch {
+        setSuggestions([])
+      } finally {
+        setSuggestLoading(false)
+      }
+    }, 300)
+  }, [])
+
+  const handleLocationChange = (e) => {
+    const val = e.target.value
+    setLocalLocation(val)
+    fetchSuggestions(val)
+  }
+
+  const selectSuggestion = (item) => {
+    const label = formatSuggestion(item)
+    setLocalLocation(label)
+    setSearchFilters({
+      location: label,
+      latitude: parseFloat(item.lat),
+      longitude: parseFloat(item.lon),
+    })
+    setSuggestions([])
+    setShowSuggestions(false)
+    setActiveSuggestion(-1)
+  }
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveSuggestion(i => Math.min(i + 1, suggestions.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveSuggestion(i => Math.max(i - 1, -1))
+    } else if (e.key === 'Enter' && activeSuggestion >= 0) {
+      e.preventDefault()
+      selectSuggestion(suggestions[activeSuggestion])
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
+  }
 
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
@@ -36,6 +131,8 @@ export default function SearchForm({ onSearchComplete }) {
         const loc = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
         setSearchFilters({ latitude, longitude, location: loc })
         setLocalLocation(loc)
+        setSuggestions([])
+        setShowSuggestions(false)
         setGeolocating(false)
       },
       () => {
@@ -57,7 +154,7 @@ export default function SearchForm({ onSearchComplete }) {
     if (coordMatch) {
       return { latitude: parseFloat(coordMatch[1]), longitude: parseFloat(coordMatch[2]) }
     }
-    const response = await fetch(`/api/geocode?q=${encodeURIComponent(locationText)}`)
+    const response = await fetch(`/api/geocode?q=${encodeURIComponent(locationText)}&limit=1`)
     const data = await response.json()
     if (!data || data.length === 0) {
       throw new Error(`Could not find "${locationText}". Try a different city name.`)
@@ -66,6 +163,7 @@ export default function SearchForm({ onSearchComplete }) {
   }
 
   const doSearch = async (query, location) => {
+    setShowSuggestions(false)
     let lat = searchFilters.latitude, lng = searchFilters.longitude
     try {
       const coords = await geocodeLocation(location)
@@ -102,18 +200,70 @@ export default function SearchForm({ onSearchComplete }) {
 
       {/* Desktop: inline row | Mobile: stacked */}
       <div className="flex flex-col md:flex-row gap-3">
-        {/* Location input */}
-        <div className="flex-1 relative">
+        {/* Location input with autocomplete */}
+        <div className="flex-1 relative" ref={wrapperRef}>
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple pointer-events-none z-10" aria-hidden="true" />
           <input
             type="text"
             value={localLocation}
-            onChange={e => setLocalLocation(e.target.value)}
+            onChange={handleLocationChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="City, town or locality..."
             required
             aria-label="Location"
-            className="input-base pl-10 h-14 rounded-xl md:rounded-l-xl md:rounded-r-none text-base"
+            aria-autocomplete="list"
+            aria-expanded={showSuggestions}
+            autoComplete="off"
+            className="input-base pl-10 pr-8 h-14 rounded-xl md:rounded-l-xl md:rounded-r-none text-base"
           />
+          {/* Clear button */}
+          {localLocation && (
+            <button
+              type="button"
+              onClick={() => { setLocalLocation(''); setSuggestions([]); setShowSuggestions(false) }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors z-10"
+              aria-label="Clear location"
+            >
+              {suggestLoading
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <X className="h-4 w-4" />
+              }
+            </button>
+          )}
+
+          {/* Suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <ul
+              className="absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card overflow-hidden z-50"
+              style={{ background: '#13111C', borderColor: '#2E2A45' }}
+              role="listbox"
+            >
+              {suggestions.map((item, i) => {
+                const label = formatSuggestion(item)
+                const type = item.type || item.class || ''
+                return (
+                  <li
+                    key={item.place_id}
+                    role="option"
+                    aria-selected={i === activeSuggestion}
+                    onMouseDown={() => selectSuggestion(item)}
+                    onMouseEnter={() => setActiveSuggestion(i)}
+                    className={[
+                      'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors text-sm',
+                      i === activeSuggestion ? 'bg-purple-subtle text-text-primary' : 'text-text-secondary hover:bg-bg-elevated',
+                    ].join(' ')}
+                  >
+                    <MapPin className="h-4 w-4 text-purple flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-text-primary">{label}</p>
+                      {type && <p className="text-xs text-text-muted capitalize">{type}</p>}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
 
         {/* Category input */}
