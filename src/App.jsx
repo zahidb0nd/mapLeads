@@ -8,17 +8,18 @@ import History from './pages/History'
 import SavedSearches from './pages/SavedSearches'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 
 function App() {
   const { isAuthenticated, user } = useStore()
 
   useEffect(() => {
-    // Load initial data when authenticated
-    // Temporarily disabled until collections are created
     if (isAuthenticated && user) {
-      // useStore.getState().loadSearchHistory()
-      // useStore.getState().loadSavedSearches()
-      // useStore.getState().loadStats()
+      useStore.getState().loadSearchHistory()
+      useStore.getState().loadSavedSearches()
+      useStore.getState().loadStats()
     }
   }, [isAuthenticated, user])
 
@@ -26,12 +27,15 @@ function App() {
     <Router>
       <div className="dark min-h-screen bg-background text-foreground">
         <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
-          <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
-          
+          {/* Public auth routes — redirect to dashboard if already logged in */}
+          <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+
           {/* Protected routes */}
-          <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}>
+          <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="search" element={<Search />} />
@@ -40,7 +44,7 @@ function App() {
           </Route>
 
           {/* Catch all */}
-          <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+          <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
         </Routes>
       </div>
     </Router>

@@ -10,13 +10,13 @@ export function useAuth() {
   const login = async (email, password) => {
     setIsLoading(true)
     setError(null)
-    
     try {
       const authData = await pb.collection('users').authWithPassword(email, password)
       setUser(authData.record)
       return authData.record
     } catch (err) {
-      setError(err.message || 'Failed to login')
+      const msg = err?.response?.message || err.message || 'Invalid email or password'
+      setError(msg)
       throw err
     } finally {
       setIsLoading(false)
@@ -26,10 +26,9 @@ export function useAuth() {
   const signup = async (email, password, name) => {
     setIsLoading(true)
     setError(null)
-    
     try {
-      // Create user
-      const user = await pb.collection('users').create({
+      // Create user account
+      await pb.collection('users').create({
         email,
         password,
         passwordConfirm: password,
@@ -37,26 +36,64 @@ export function useAuth() {
         emailVisibility: true
       })
 
+      // Send email verification
+      await pb.collection('users').requestVerification(email)
+
       // Auto login after signup
       const authData = await pb.collection('users').authWithPassword(email, password)
       setUser(authData.record)
-      
+
       return authData.record
     } catch (err) {
-      setError(err.message || 'Failed to sign up')
+      const msg = err?.response?.message || err.message || 'Failed to create account'
+      setError(msg)
       throw err
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = async () => {
+  const logout = () => {
+    pb.authStore.clear()
+    setUser(null)
+  }
+
+  const requestPasswordReset = async (email) => {
     setIsLoading(true)
+    setError(null)
     try {
-      pb.authStore.clear()
-      setUser(null)
+      await pb.collection('users').requestPasswordReset(email)
     } catch (err) {
-      setError(err.message || 'Failed to logout')
+      const msg = err?.response?.message || err.message || 'Failed to send reset email'
+      setError(msg)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const confirmPasswordReset = async (token, password) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      await pb.collection('users').confirmPasswordReset(token, password, password)
+    } catch (err) {
+      const msg = err?.response?.message || err.message || 'Failed to reset password'
+      setError(msg)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const confirmVerification = async (token) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      await pb.collection('users').confirmVerification(token)
+    } catch (err) {
+      const msg = err?.response?.message || err.message || 'Failed to verify email'
+      setError(msg)
       throw err
     } finally {
       setIsLoading(false)
@@ -70,6 +107,9 @@ export function useAuth() {
     error,
     login,
     signup,
-    logout
+    logout,
+    requestPasswordReset,
+    confirmPasswordReset,
+    confirmVerification,
   }
 }
