@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import {
   Search as SearchIcon, MapPin, Tag, SlidersHorizontal, Download,
   LayoutGrid, Table2, Building2, Globe, Star, Phone, ExternalLink,
@@ -223,17 +223,37 @@ export default function Search() {
   const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table'
   const [showFilters, setShowFilters] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
+  const [fromCache, setFromCache] = useState(false)
+  const memoryCache = useRef(new Map())
   usePageTitle('Search — MapLeads Bangalore')
+  
+  const getMemCacheKey = (city, category) => {
+    return `${city.trim().toLowerCase()}_${category?.trim().toLowerCase() || 'all'}`
+  }
 
   const handleCategoryChip = async (value) => {
     setActiveCategory(value)
+    
+    // Check memory cache first
+    const memKey = getMemCacheKey('Bangalore', value || 'all')
+    if (memoryCache.current.has(memKey)) {
+      console.log('[MapLeads] Memory cache hit for:', memKey)
+      setSearchResults(memoryCache.current.get(memKey))
+      setFromCache(true)
+      return
+    }
+    
     setIsSearching(true)
     setSearchError(null)
     setSearchResults([])
+    setFromCache(false)
 
     try {
       const businesses = await fetchAllBusinesses(value || 'all')
       setSearchResults(businesses)
+      
+      // Save to memory cache
+      memoryCache.current.set(memKey, businesses)
       
       if (businesses.length === 0) {
         setSearchError(
