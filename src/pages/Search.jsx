@@ -3,6 +3,7 @@ import {
   Search as SearchIcon, MapPin, Tag, SlidersHorizontal, Download,
   LayoutGrid, Table2, Building2, Globe, Star, Phone, ExternalLink,
   Bookmark, SearchX, WifiOff, X, RefreshCw, ChevronUp, ChevronDown,
+  Clock, Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -226,6 +227,7 @@ export default function Search() {
   const [activeCategory, setActiveCategory] = useState('')
   const [fromCache, setFromCache] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const memoryCache = useRef(new Map())
   usePageTitle('Search — MapLeads Bangalore')
   
@@ -235,6 +237,39 @@ export default function Search() {
   
   const getCacheKey = (city, category) => {
     return `${city.toLowerCase().trim()}_${category?.toLowerCase().trim() || 'all'}_v1`
+  }
+  
+  const handleRefresh = async () => {
+    const city = 'Bangalore'
+    const category = activeCategory || 'all'
+    
+    setIsRefreshing(true)
+    
+    try {
+      // Delete PocketBase cache
+      const cacheKey = getCacheKey(city, category)
+      const existing = await pb.collection('search_cache').getFullList({
+        filter: `cache_key = "${cacheKey}"`
+      })
+      
+      if (existing.length > 0) {
+        await pb.collection('search_cache').delete(existing[0].id)
+        console.log('[MapLeads] Deleted cache for:', cacheKey)
+      }
+      
+      // Clear memory cache
+      const memKey = getMemCacheKey(city, category)
+      memoryCache.current.delete(memKey)
+      
+      // Re-run search
+      setFromCache(false)
+      await handleCategoryChip(activeCategory)
+    } catch (err) {
+      console.error('Refresh failed:', err)
+      setSearchError('Refresh failed. Please try again.')
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const handleCategoryChip = async (value) => {
@@ -422,11 +457,39 @@ export default function Search() {
       {/* Results header */}
       {searchResults.length > 0 && (
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-success" aria-hidden="true" />
-            <span className="text-success font-bold text-lg">
-              Found {displayResults.length} businesses with no website
-            </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-success" aria-hidden="true" />
+              <span className="text-success font-bold text-lg">
+                Found {displayResults.length} businesses with no website
+              </span>
+            </div>
+            
+            {/* Cache status indicator */}
+            {fromCache && (
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  Cached results
+                </Badge>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="text-text-muted hover:text-purple transition-colors disabled:opacity-50"
+                  aria-label="Refresh results"
+                  title="Refresh results"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            )}
+            
+            {!fromCache && searchResults.length > 0 && !isSearching && (
+              <Badge variant="success" className="flex items-center gap-1.5 animate-fadeIn">
+                <Zap className="h-3 w-3" />
+                Live results
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Grid/Table toggle */}
