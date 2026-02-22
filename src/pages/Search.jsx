@@ -228,8 +228,11 @@ export default function Search() {
   const [fromCache, setFromCache] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(20)
   const memoryCache = useRef(new Map())
   usePageTitle('Search — MapLeads Bangalore')
+  
+  const PAGE_SIZE = 20
   
   const getMemCacheKey = (city, category) => {
     return `${city.trim().toLowerCase()}_${category?.trim().toLowerCase() || 'all'}`
@@ -348,7 +351,7 @@ export default function Search() {
     }
   }
 
-  const displayResults = useMemo(() => {
+  const allDisplayResults = useMemo(() => {
     let results = [...searchResults]
     if (filterByPhone) results = results.filter(b => b.tel)
     // Don't filter by activeCategory - it's already filtered by the search
@@ -361,6 +364,25 @@ export default function Search() {
     }
     return results
   }, [searchResults, sortBy, filterByPhone])
+  
+  const displayResults = useMemo(() => {
+    return allDisplayResults.slice(0, visibleCount)
+  }, [allDisplayResults, visibleCount])
+  
+  const hasMore = visibleCount < allDisplayResults.length
+  
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + PAGE_SIZE)
+  }
+  
+  // Reset visible count when search results change
+  const prevSearchResultsLength = useRef(0)
+  if (searchResults.length !== prevSearchResultsLength.current) {
+    prevSearchResultsLength.current = searchResults.length
+    if (visibleCount !== 20) {
+      setVisibleCount(20)
+    }
+  }
 
   const handleExportCSV = () => {
     if (!searchResults.length) { warning('No results', 'Run a search first.'); return }
@@ -586,11 +608,39 @@ export default function Search() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayResults.map((business, i) => (
-            <BusinessCard key={business.fsq_id || i} business={business} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayResults.map((business, i) => (
+              <BusinessCard key={business.fsq_id || i} business={business} />
+            ))}
+          </div>
+          
+          {/* Pagination controls */}
+          {allDisplayResults.length > 0 && (
+            <div className="flex flex-col items-center gap-3 mt-6">
+              <p className="text-text-muted text-sm">
+                Showing {displayResults.length} of {allDisplayResults.length} businesses
+              </p>
+              
+              {hasMore ? (
+                <Button
+                  variant="secondary"
+                  onClick={handleLoadMore}
+                  className="w-full md:w-auto"
+                >
+                  Load {Math.min(PAGE_SIZE, allDisplayResults.length - visibleCount)} more
+                  <span className="text-text-muted ml-1">
+                    ({allDisplayResults.length - visibleCount} remaining)
+                  </span>
+                </Button>
+              ) : allDisplayResults.length > PAGE_SIZE && (
+                <p className="text-text-muted text-sm text-center">
+                  All {allDisplayResults.length} businesses shown
+                </p>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Floating export FAB (mobile) */}
