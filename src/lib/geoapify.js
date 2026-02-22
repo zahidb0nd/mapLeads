@@ -12,8 +12,12 @@ class GeoapifyAPI {
    * @returns {Promise<{bbox: number[], name: string, country: string}>}
    */
   async geocodeCityToBbox(cityName) {
-    if (!this.apiKey) {
-      throw new Error('Geoapify API key is not configured')
+    // Step 1 — Validate the API key exists
+    const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY
+    
+    if (!apiKey) {
+      console.warn('[MapLeads] Geocoding failed: GEOAPIFY_API_KEY is not configured')
+      throw new Error('Search is unavailable. Please contact support.')
     }
 
     try {
@@ -21,13 +25,25 @@ class GeoapifyAPI {
         `${PROXY_BASE_URL}/geoapify/geocode?text=${encodeURIComponent(cityName)}&type=city&limit=1`
       )
 
+      // Step 2 — Check response.ok before parsing
       if (!response.ok) {
-        throw new Error('Failed to geocode city')
+        console.warn(`[MapLeads] Geocoding failed: API returned status ${response.status}`)
+        throw new Error(`Geocoding API returned status ${response.status}`)
       }
 
+      // Step 3 — Validate content type before parsing as JSON
+      const contentType = response.headers.get('content-type')
+      
+      if (!contentType?.includes('application/json')) {
+        console.warn('[MapLeads] Geocoding failed: Expected JSON but got HTML. API key may be invalid or missing.')
+        throw new Error('Expected JSON but got HTML. API key may be invalid or missing.')
+      }
+      
       const data = await response.json()
       
+      // Step 4 — Show user-friendly error messages (404 or no results)
       if (!data.features || data.features.length === 0) {
+        console.warn(`[MapLeads] Geocoding failed: City "${cityName}" not found`)
         throw new Error(`We couldn't find "${cityName}". Try adding the country e.g. 'Austin, USA' or 'Mumbai, India'`)
       }
 
@@ -35,7 +51,8 @@ class GeoapifyAPI {
       const bbox = feature.bbox // [lon_min, lat_min, lon_max, lat_max]
       
       if (!bbox || bbox.length !== 4) {
-        throw new Error('Invalid bounding box received from geocoding service')
+        console.warn('[MapLeads] Geocoding failed: Invalid bounding box received from geocoding service')
+        throw new Error('Search is unavailable. Please contact support.')
       }
 
       return {
@@ -46,7 +63,28 @@ class GeoapifyAPI {
         formatted: feature.properties.formatted
       }
     } catch (error) {
-      console.error('City geocoding error:', error)
+      // Step 5 — Add console warnings for debugging
+      console.warn('[MapLeads] Geocoding failed:', error.message)
+      
+      // Step 4 — Map internal errors to UI messages
+      if (error.message.includes('not configured')) {
+        throw new Error('Search is unavailable. Please contact support.')
+      }
+      
+      if (error.message.includes('HTML')) {
+        throw new Error('Search is unavailable. Please contact support.')
+      }
+      
+      if (error.message.includes('404') || error.message.includes("We couldn't find")) {
+        // Already has user-friendly message, re-throw as-is
+        throw error
+      }
+      
+      if (error.message.includes('status')) {
+        throw new Error('Search is unavailable. Please contact support.')
+      }
+      
+      // Default case - already has appropriate message
       throw error
     }
   }
