@@ -24,6 +24,8 @@ const fetchGeoapifyBucket = async (bucket) => {
     `&limit=500` +
     `&apiKey=${apiKey}`
 
+  console.log(`[MapLeads] Fetching bucket: ${bucket}`)
+
   const response = await fetch(url)
   
   if (response.status === 400) {
@@ -37,7 +39,9 @@ const fetchGeoapifyBucket = async (bucket) => {
   }
 
   const data = await response.json()
-  return data.features || []
+  const features = data.features || []
+  console.log(`[MapLeads] Bucket ${bucket} returned ${features.length} places`)
+  return features
 }
 
 /**
@@ -83,6 +87,8 @@ const transformPlace = (feature) => {
  * @returns {Array} Filtered and deduplicated places
  */
 const deduplicateAndFilter = (results) => {
+  console.log(`[MapLeads] Deduplicating ${results.length} total results`)
+  
   // Deduplicate by place_id
   const seen = new Map()
   results.forEach(place => {
@@ -91,6 +97,8 @@ const deduplicateAndFilter = (results) => {
       seen.set(id, place)
     }
   })
+
+  console.log(`[MapLeads] After deduplication: ${seen.size} unique places`)
 
   // Filter: no website, has name
   const filtered = [...seen.values()].filter(place => {
@@ -101,6 +109,8 @@ const deduplicateAndFilter = (results) => {
       !p.website
     )
   })
+
+  console.log(`[MapLeads] After filtering (no website): ${filtered.length} places`)
 
   // Transform to app format
   return filtered.map(transformPlace)
