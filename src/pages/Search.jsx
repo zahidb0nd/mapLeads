@@ -13,7 +13,8 @@ import { exportToCSV } from '@/lib/utils'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import SearchForm from '@/components/search/SearchForm'
 import { useBusinessSearch } from '@/hooks/useBusinessSearch'
-import { fetchAllBusinesses } from '@/lib/searchService'
+import { fetchAllBusinesses, getCachedResults, saveCachedResults } from '@/lib/searchService'
+import pb from '@/lib/pocketbase'
 
 const QUICK_CATEGORIES = [
   { label: 'All',         emoji: '🌐', value: '' },
@@ -230,30 +231,54 @@ export default function Search() {
   const getMemCacheKey = (city, category) => {
     return `${city.trim().toLowerCase()}_${category?.trim().toLowerCase() || 'all'}`
   }
+  
+  const getCacheKey = (city, category) => {
+    return `${city.toLowerCase().trim()}_${category?.toLowerCase().trim() || 'all'}_v1`
+  }
 
   const handleCategoryChip = async (value) => {
     setActiveCategory(value)
-    
-    // Check memory cache first
-    const memKey = getMemCacheKey('Bangalore', value || 'all')
-    if (memoryCache.current.has(memKey)) {
-      console.log('[MapLeads] Memory cache hit for:', memKey)
-      setSearchResults(memoryCache.current.get(memKey))
-      setFromCache(true)
-      return
-    }
+    const city = 'Bangalore'
+    const category = value || 'all'
     
     setIsSearching(true)
     setSearchError(null)
-    setSearchResults([])
-    setFromCache(false)
 
     try {
-      const businesses = await fetchAllBusinesses(value || 'all')
-      setSearchResults(businesses)
+      // 1. Check memory cache
+      const memKey = getMemCacheKey(city, category)
+      if (memoryCache.current.has(memKey)) {
+        console.log('[MapLeads] Memory cache hit for:', memKey)
+        setSearchResults(memoryCache.current.get(memKey))
+        setFromCache(true)
+        setIsSearching(false)
+        return
+      }
+
+      // 2. Check PocketBase cache
+      const cacheKey = getCacheKey(city, category)
+      const cached = await getCachedResults(pb, cacheKey)
+      if (cached) {
+        setSearchResults(cached)
+        memoryCache.current.set(memKey, cached)
+        setFromCache(true)
+        setIsSearching(false)
+        return
+      }
+
+      // 3. Fetch from Geoapify
+      setSearchResults([])
+      setFromCache(false)
       
-      // Save to memory cache
+      const businesses = await fetchAllBusinesses(category)
+
+      // 4. Save to both caches
+      await saveCachedResults(pb, cacheKey, city, category, businesses)
       memoryCache.current.set(memKey, businesses)
+
+      // 5. Update UI
+      setSearchResults(businesses)
+      setFromCache(false)
       
       if (businesses.length === 0) {
         setSearchError(
