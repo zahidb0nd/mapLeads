@@ -7,7 +7,14 @@ const BANGALORE_BBOX = [77.4601, 12.8340, 77.7800, 13.1390]
  * @returns {Promise<Array>} Array of place features
  */
 const fetchGeoapifyBucket = async (bucket) => {
-  const apiKey = import.meta.env.VITE_GEOAPIFY_KEY
+  const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY
+  
+  console.log('[MapLeads] API key present:', !!apiKey)
+  
+  if (!apiKey) {
+    throw new Error('Geoapify API key is not configured')
+  }
+
   const [lon_min, lat_min, lon_max, lat_max] = BANGALORE_BBOX
 
   const url = 
