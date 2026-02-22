@@ -265,9 +265,10 @@ export const saveCachedResults = async (pb, cacheKey, city, category, results) =
 /**
  * Fetch all businesses for a given category from Geoapify
  * @param {string} category - Category name (e.g., 'restaurants', 'all')
+ * @param {Function} onProgress - Optional callback for streaming progress (current, total, results)
  * @returns {Promise<Array>} Filtered businesses without websites
  */
-export const fetchAllBusinesses = async (category) => {
+export const fetchAllBusinesses = async (category, onProgress = null) => {
   const { CATEGORY_MAP, CATEGORY_BUCKETS } = await import('./categoryMap.js')
 
   // Single category search
@@ -283,10 +284,34 @@ export const fetchAllBusinesses = async (category) => {
     return deduplicateAndFilter(results)
   }
 
-  // All categories — parallel fetch
-  const allResults = await Promise.all(
-    CATEGORY_BUCKETS.map(bucket => fetchGeoapifyBucket(bucket))
-  )
-
-  return deduplicateAndFilter(allResults.flat())
+  // All categories — streaming or parallel fetch
+  if (onProgress) {
+    // Stream results progressively
+    let allResults = []
+    const total = CATEGORY_BUCKETS.length
+    
+    for (let i = 0; i < CATEGORY_BUCKETS.length; i++) {
+      const bucket = CATEGORY_BUCKETS[i]
+      const bucketResults = await fetchGeoapifyBucket(bucket)
+      allResults = [...allResults, ...bucketResults]
+      
+      // Deduplicate and filter after each bucket
+      const filtered = deduplicateAndFilter(allResults)
+      
+      // Call progress callback
+      onProgress({
+        current: i + 1,
+        total: total,
+        results: filtered
+      })
+    }
+    
+    return deduplicateAndFilter(allResults)
+  } else {
+    // Parallel fetch (original behavior)
+    const allResults = await Promise.all(
+      CATEGORY_BUCKETS.map(bucket => fetchGeoapifyBucket(bucket))
+    )
+    return deduplicateAndFilter(allResults.flat())
+  }
 }

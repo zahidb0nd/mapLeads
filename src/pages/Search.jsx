@@ -225,6 +225,7 @@ export default function Search() {
   const [showFilters, setShowFilters] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
   const [fromCache, setFromCache] = useState(false)
+  const [progress, setProgress] = useState({ current: 0, total: 0 })
   const memoryCache = useRef(new Map())
   usePageTitle('Search — MapLeads Bangalore')
   
@@ -270,7 +271,26 @@ export default function Search() {
       setSearchResults([])
       setFromCache(false)
       
-      const businesses = await fetchAllBusinesses(category)
+      let businesses
+      
+      // Use progressive streaming for 'all' category
+      if (category === 'all') {
+        setProgress({ current: 0, total: 17 })
+        
+        businesses = await fetchAllBusinesses(category, (progressData) => {
+          // Update results progressively
+          setSearchResults(progressData.results)
+          setProgress({
+            current: progressData.current,
+            total: progressData.total
+          })
+        })
+        
+        // Reset progress after completion
+        setProgress({ current: 0, total: 0 })
+      } else {
+        businesses = await fetchAllBusinesses(category)
+      }
 
       // 4. Save to both caches
       await saveCachedResults(pb, cacheKey, city, category, businesses)
@@ -439,8 +459,28 @@ export default function Search() {
         </div>
       )}
 
+      {/* Progress bar for streaming */}
+      {isSearching && progress.total > 0 && (
+        <div className="rounded-xl border p-4" style={{ borderColor: '#2E2A45', background: '#1C1828' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-text-secondary text-sm">
+              Searching... ({progress.current}/{progress.total} categories)
+            </span>
+            <span className="text-purple text-sm font-semibold">
+              {Math.round((progress.current / progress.total) * 100)}%
+            </span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-bg-elevated overflow-hidden">
+            <div 
+              className="h-full bg-purple transition-all duration-300"
+              style={{ width: `${(progress.current / progress.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Results */}
-      {isSearching ? (
+      {isSearching && progress.total === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <BusinessCardSkeleton key={i} />)}
         </div>
