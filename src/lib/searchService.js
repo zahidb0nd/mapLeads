@@ -195,6 +195,74 @@ const deduplicateAndFilter = (results) => {
 }
 
 /**
+ * Get cached search results from PocketBase
+ * @param {Object} pb - PocketBase instance
+ * @param {string} cacheKey - Cache key
+ * @returns {Promise<Array|null>} Cached results or null if not found/expired
+ */
+export const getCachedResults = async (pb, cacheKey) => {
+  try {
+    const now = new Date().toISOString()
+    const records = await pb.collection('search_cache').getFullList({
+      filter: `cache_key = "${cacheKey}" && expires_at > "${now}"`
+    })
+    
+    if (records.length > 0) {
+      console.log(`[MapLeads] Cache hit for key: ${cacheKey}`)
+      return records[0].results_json
+    }
+    
+    console.log(`[MapLeads] Cache miss for key: ${cacheKey}`)
+    return null
+  } catch (error) {
+    console.warn('[MapLeads] Cache retrieval error:', error)
+    return null
+  }
+}
+
+/**
+ * Save search results to PocketBase cache
+ * @param {Object} pb - PocketBase instance
+ * @param {string} cacheKey - Cache key
+ * @param {string} city - City name
+ * @param {string} category - Category name
+ * @param {Array} results - Search results
+ * @returns {Promise<void>}
+ */
+export const saveCachedResults = async (pb, cacheKey, city, category, results) => {
+  try {
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 24)
+    
+    const data = {
+      cache_key: cacheKey,
+      results_json: results,
+      city: city,
+      category: category || 'all',
+      result_count: results.length,
+      expires_at: expiresAt.toISOString()
+    }
+    
+    // Try to find existing record
+    const existing = await pb.collection('search_cache').getFullList({
+      filter: `cache_key = "${cacheKey}"`
+    })
+    
+    if (existing.length > 0) {
+      // Update existing
+      await pb.collection('search_cache').update(existing[0].id, data)
+      console.log(`[MapLeads] Cache updated for key: ${cacheKey}`)
+    } else {
+      // Create new
+      await pb.collection('search_cache').create(data)
+      console.log(`[MapLeads] Cache created for key: ${cacheKey}`)
+    }
+  } catch (error) {
+    console.warn('[MapLeads] Cache save error:', error)
+  }
+}
+
+/**
  * Fetch all businesses for a given category from Geoapify
  * @param {string} category - Category name (e.g., 'restaurants', 'all')
  * @returns {Promise<Array>} Filtered businesses without websites
