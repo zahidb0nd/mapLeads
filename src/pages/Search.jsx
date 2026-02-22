@@ -13,6 +13,7 @@ import { exportToCSV } from '@/lib/utils'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import SearchForm from '@/components/search/SearchForm'
 import { useBusinessSearch } from '@/hooks/useBusinessSearch'
+import { fetchAllBusinesses } from '@/lib/searchService'
 
 const QUICK_CATEGORIES = [
   { label: 'All',         emoji: '🌐', value: '' },
@@ -215,6 +216,7 @@ export default function Search() {
   const {
     searchResults, searchFilters, isSearching, searchError,
     sortBy, setSortBy, filterByPhone, setFilterByPhone,
+    setSearchResults, setIsSearching, setSearchError,
   } = useStore()
   const { search } = useBusinessSearch()
   const { success, warning } = useToast()
@@ -225,8 +227,25 @@ export default function Search() {
 
   const handleCategoryChip = async (value) => {
     setActiveCategory(value)
-    // Trigger search for Bangalore with selected category
-    await search({ query: value, categories: [] })
+    setIsSearching(true)
+    setSearchError(null)
+    setSearchResults([])
+
+    try {
+      const businesses = await fetchAllBusinesses(value || 'all')
+      setSearchResults(businesses)
+      
+      if (businesses.length === 0) {
+        setSearchError(
+          'No businesses found without a website in Bangalore for this category. Try a different category.'
+        )
+      }
+    } catch (err) {
+      console.error('Search failed:', err)
+      setSearchError('Search failed. Please try again.')
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   const displayResults = useMemo(() => {
