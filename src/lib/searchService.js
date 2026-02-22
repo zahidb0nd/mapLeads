@@ -26,6 +26,11 @@ const fetchGeoapifyBucket = async (bucket) => {
 
   const response = await fetch(url)
   
+  if (response.status === 400) {
+    console.warn(`[MapLeads] Invalid category: ${bucket}`)
+    return []
+  }
+  
   if (!response.ok) {
     console.warn(`Bucket ${bucket} failed:`, response.status)
     return []
