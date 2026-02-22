@@ -59,6 +59,33 @@ function PublicRoute({ children }) {
   return children
 }
 
+/**
+ * Clean expired cache entries from PocketBase
+ */
+const cleanExpiredCache = async (pb) => {
+  try {
+    const expired = await pb
+      .collection('search_cache')
+      .getFullList({
+        filter: `expires_at < "${new Date().toISOString()}"`
+      })
+    
+    await Promise.all(
+      expired.map(record => 
+        pb.collection('search_cache')
+          .delete(record.id)
+      )
+    )
+    
+    console.log(
+      `[MapLeads] Cleaned ${expired.length} expired cache entries`
+    )
+  } catch (e) {
+    // Silently fail — not critical
+    console.warn('[MapLeads] Cache cleanup failed:', e)
+  }
+}
+
 function App() {
   const { isAuthenticated, user, setUser } = useStore()
 
@@ -73,6 +100,11 @@ function App() {
       setUser(pb.authStore.model)
     }
   }, [setUser])
+  
+  useEffect(() => {
+    // Clean expired cache on mount
+    cleanExpiredCache(pb)
+  }, [])
 
   useEffect(() => {
     // Handle 401 errors globally (session expiry)
