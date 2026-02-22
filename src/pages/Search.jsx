@@ -46,12 +46,46 @@ function BusinessCard({ business, onSave }) {
     ? `https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`
     : null
   const category = business.categories?.[0]?.name || ''
+  
+  // Quality badge based on qualityScore
+  const getQualityBadge = (score) => {
+    if (score >= 50) {
+      return {
+        label: 'Strong lead',
+        className: 'bg-success-subtle text-success-DEFAULT border-success-DEFAULT',
+        dotColor: '#10B981'
+      }
+    } else if (score >= 30) {
+      return {
+        label: 'Fair lead',
+        className: 'bg-warning-subtle text-warning-DEFAULT border-warning-DEFAULT',
+        dotColor: '#F59E0B'
+      }
+    } else {
+      return {
+        label: 'Limited info',
+        className: 'bg-bg-elevated text-text-muted border-border',
+        dotColor: '#6B6494'
+      }
+    }
+  }
+  
+  const qualityBadge = getQualityBadge(business.qualityScore || 0)
 
   return (
-    <div className="rounded-2xl border p-4 md:p-5 transition-all duration-200 bg-card-gradient hover:border-purple hover:shadow-purple-glow hover:-translate-y-0.5 group animate-slideUp"
+    <div className="rounded-2xl border p-4 md:p-5 transition-all duration-200 bg-card-gradient hover:border-purple hover:shadow-purple-glow hover:-translate-y-0.5 group animate-slideUp relative"
       style={{ borderColor: '#2E2A45' }}>
+      {/* Quality badge - top right */}
+      <div 
+        className={`absolute top-3 right-3 px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1 ${qualityBadge.className}`}
+        title="Based on available contact info and business data completeness"
+      >
+        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: qualityBadge.dotColor }} />
+        {qualityBadge.label}
+      </div>
+      
       {/* Top row */}
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-3 mb-3 pr-24">
         <div className="rounded-lg p-2 flex-shrink-0" style={{ background: '#7C3AED15' }}>
           <Building2 className="h-5 w-5 text-purple" aria-hidden="true" />
         </div>
