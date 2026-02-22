@@ -2,6 +2,49 @@
 const BANGALORE_BBOX = [77.4601, 12.8340, 77.7800, 13.1390]
 
 /**
+ * Check if a place's coordinates are within a bounding box
+ * @param {Object} place - Geoapify place feature
+ * @param {Array} bbox - Bounding box [lon_min, lat_min, lon_max, lat_max]
+ * @returns {boolean} True if place is within bounds
+ */
+const isInBounds = (place, bbox) => {
+  const [lon_min, lat_min, lon_max, lat_max] = bbox
+  const p = place.properties || {}
+  const [longitude, latitude] = place.geometry?.coordinates || []
+  
+  const lat = p.lat || latitude
+  const lon = p.lon || longitude
+  
+  if (!lat || !lon) return false
+  
+  return (
+    lon >= lon_min &&
+    lon <= lon_max &&
+    lat >= lat_min &&
+    lat <= lat_max
+  )
+}
+
+/**
+ * Check if a place meets quality criteria
+ * @param {Object} place - Geoapify place feature
+ * @returns {boolean} True if place meets quality standards
+ */
+const isQualityResult = (place) => {
+  const p = place.properties
+  
+  if (!p) return false
+  
+  // Must have a name with length > 2
+  if (!p.name || p.name.length <= 2) return false
+  
+  // Must have address_line1 OR city field
+  if (!p.address_line1 && !p.city) return false
+  
+  return true
+}
+
+/**
  * Fetch businesses from Geoapify for a single category bucket
  * @param {string} bucket - Geoapify category string (e.g., 'catering.restaurant')
  * @returns {Promise<Array>} Array of place features
@@ -112,8 +155,16 @@ const deduplicateAndFilter = (results) => {
 
   console.log(`[MapLeads] After filtering (no website): ${filtered.length} places`)
 
+  // Filter: must be in bounds
+  const inBounds = filtered.filter(place => isInBounds(place, BANGALORE_BBOX))
+  console.log(`[MapLeads] After filtering (in bounds): ${inBounds.length} places`)
+
+  // Filter: quality results only
+  const quality = inBounds.filter(place => isQualityResult(place))
+  console.log(`[MapLeads] After filtering (quality): ${quality.length} places`)
+
   // Transform to app format
-  return filtered.map(transformPlace)
+  return quality.map(transformPlace)
 }
 
 /**
