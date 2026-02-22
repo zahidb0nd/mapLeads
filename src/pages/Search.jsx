@@ -221,13 +221,12 @@ export default function Search() {
   const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table'
   const [showFilters, setShowFilters] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
-  usePageTitle('Search')
+  usePageTitle('Search — MapLeads Bangalore')
 
   const handleCategoryChip = async (value) => {
     setActiveCategory(value)
-    // Only trigger a search if we already have coordinates
-    if (!searchFilters.latitude || !searchFilters.longitude) return
-    await search({ query: value, latitude: searchFilters.latitude, longitude: searchFilters.longitude, categories: [] })
+    // Trigger search for Bangalore with selected category
+    await search({ query: value, categories: [] })
   }
 
   const displayResults = useMemo(() => {
@@ -258,8 +257,7 @@ export default function Search() {
       'Google Maps URL': b.latitude && b.longitude
         ? `https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}` : '',
     }))
-    const city = searchFilters.location?.split(',')[0]?.trim().replace(/\s+/g, '_').toLowerCase() || 'results'
-    exportToCSV(data, `mapleads_${city}_${new Date().toISOString().split('T')[0]}.csv`)
+    exportToCSV(data, `mapleads_bangalore_${new Date().toISOString().split('T')[0]}.csv`)
     success('Exported!', `${searchResults.length} businesses exported to CSV.`)
   }
 
@@ -270,9 +268,9 @@ export default function Search() {
       {/* Hero Search Section */}
       <div className="rounded-2xl p-6 md:p-8" style={{ background: 'radial-gradient(ellipse at 50% 0%, #7C3AED22 0%, transparent 70%), linear-gradient(145deg, #13111C, #1C1828)', border: '1px solid #2E2A45' }}>
         <h1 className="text-xl md:text-3xl font-extrabold text-text-primary mb-1">
-          Find businesses with no website
+          Find businesses in Bangalore with no website
         </h1>
-        <p className="text-text-secondary text-sm mb-6">Search any city, locality or neighbourhood</p>
+        <p className="text-text-secondary text-sm mb-6">Discover local Bangalore businesses with no online presence</p>
 
         {/* Search Form */}
         <SearchForm />

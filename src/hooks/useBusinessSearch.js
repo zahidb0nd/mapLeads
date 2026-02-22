@@ -2,6 +2,9 @@ import { useState } from 'react'
 import geoapifyAPI from '@/lib/geoapify'
 import useStore from '@/stores/useStore'
 
+// Hardcoded Bangalore bounding box: [lon_min, lat_min, lon_max, lat_max]
+const BANGALORE_BBOX = [77.4601, 12.8340, 77.7800, 13.1390]
+
 export function useBusinessSearch() {
   const { 
     searchFilters, 
@@ -15,46 +18,8 @@ export function useBusinessSearch() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  /**
-   * Geocode a city name and store the bbox in filters
-   * @param {string} cityName - City name to geocode
-   * @returns {Promise<{bbox: number[], name: string}>}
-   */
-  const geocodeCity = async (cityName) => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const result = await geoapifyAPI.geocodeCityToBbox(cityName)
-      
-      // Store bbox in search filters
-      setSearchFilters({
-        location: result.formatted || `${result.name}, ${result.country}`,
-        bbox: result.bbox
-      })
-      
-      return result
-    } catch (err) {
-      console.error('Geocode city error:', err)
-      const errorMsg = err.message || 'Failed to find city location'
-      setError(errorMsg)
-      setSearchError(errorMsg)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const search = async (customFilters = {}) => {
     const filters = { ...searchFilters, ...customFilters }
-    
-    // Validate required fields - need either bbox OR lat/lon
-    if (!filters.bbox && (!filters.latitude || !filters.longitude)) {
-      const errorMsg = 'Location is required. Please enter a city or use current location.'
-      setError(errorMsg)
-      setSearchError(errorMsg)
-      return []
-    }
 
     setIsLoading(true)
     setIsSearching(true)
@@ -62,14 +27,11 @@ export function useBusinessSearch() {
     setSearchError(null)
 
     try {
-      // Search places using Geoapify API
+      // Always search Bangalore using hardcoded bbox
       const results = await geoapifyAPI.searchPlaces({
         query: filters.query,
-        latitude: filters.latitude,
-        longitude: filters.longitude,
-        radius: filters.radius,
         categories: filters.categories,
-        bbox: filters.bbox, // Pass bbox if available
+        bbox: BANGALORE_BBOX, // Always use Bangalore bbox
         limit: 50
       })
 
@@ -81,10 +43,7 @@ export function useBusinessSearch() {
       // Save to search history
       await addSearchToHistory({
         query: filters.query || 'General',
-        location: filters.location,
-        latitude: filters.latitude,
-        longitude: filters.longitude,
-        radius: filters.radius,
+        location: 'Bangalore, India',
         categories: filters.categories,
         results_count: placesWithoutWebsite.length
       })
@@ -129,7 +88,6 @@ export function useBusinessSearch() {
 
   return {
     search,
-    geocodeCity,
     getPlaceDetails,
     isLoading,
     error
