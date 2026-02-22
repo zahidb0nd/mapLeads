@@ -45,6 +45,26 @@ const isQualityResult = (place) => {
 }
 
 /**
+ * Calculate quality score for a place based on available data
+ * @param {Object} place - Transformed place object
+ * @returns {number} Quality score (higher is better)
+ */
+const getQualityScore = (place) => {
+  let score = 0
+  
+  if (place.name) score += 10
+  if (place.tel) score += 20
+  if (place.formatted_address || place.address) score += 15
+  if (place.opening_hours) score += 10
+  if (place.categories?.length > 0) score += 5
+  if (place.latitude && place.longitude) score += 5
+  if (place.name && place.name.length < 3) score -= 20
+  if (!place.locality) score -= 10
+  
+  return score
+}
+
+/**
  * Fetch businesses from Geoapify for a single category bucket
  * @param {string} bucket - Geoapify category string (e.g., 'catering.restaurant')
  * @returns {Promise<Array>} Array of place features
@@ -163,8 +183,15 @@ const deduplicateAndFilter = (results) => {
   const quality = inBounds.filter(place => isQualityResult(place))
   console.log(`[MapLeads] After filtering (quality): ${quality.length} places`)
 
-  // Transform to app format
-  return quality.map(transformPlace)
+  // Transform to app format and add quality score
+  const transformed = quality.map(place => {
+    const transformed = transformPlace(place)
+    transformed.qualityScore = getQualityScore(transformed)
+    return transformed
+  })
+  
+  // Sort by quality score descending
+  return transformed.sort((a, b) => b.qualityScore - a.qualityScore)
 }
 
 /**

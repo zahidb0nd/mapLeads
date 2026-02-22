@@ -1,0 +1,348 @@
+task 5
+In MapLeads searchService.js, add a 
+function getQualityScore(place):
+
+let score = 0
+if (name) score += 10
+if (phone) score += 20
+if (address_line1) score += 15
+if (opening_hours) score += 10
+if (categories?.length > 0) score += 5
+if (lat && lon) score += 5
+if (name.length < 3) score -= 20
+if (!city) score -= 10
+
+Return score.
+
+After filtering in fetchAllBusinesses,
+add qualityScore to each result:
+  place.qualityScore = getQualityScore(place)
+
+Then sort results by qualityScore descending.
+
+No UI changes yet.
+
+
+
+
+task 6
+In MapLeads, create a PocketBase collection 
+called search_cache with these fields:
+  cache_key    (text, required, unique index)
+  results_json (json, required)
+  city         (text, required)
+  category     (text)
+  result_count (number)
+  expires_at   (date, required)
+
+Then in searchService.js add two functions:
+
+1. getCachedResults(pb, cacheKey):
+   - Query search_cache where 
+     cache_key = cacheKey AND
+     expires_at > now
+   - If found: return parsed results_json
+   - If not found: return null
+
+2. saveCachedResults(pb, cacheKey, 
+                     city, category, results):
+   - Set expires_at = now + 24 hours
+   - Create record in search_cache
+   - If cache_key already exists, 
+     update instead of create
+
+Cache key format:
+  `${city.toLowerCase().trim()}_
+   ${category?.toLowerCase().trim() || 'all'}_v1`
+
+No UI changes yet.
+
+
+
+
+
+
+
+task 7
+In MapLeads, in the Search page component,
+add an in-memory cache using useRef:
+
+const memoryCache = useRef(new Map())
+
+const getMemCacheKey = (city, category) =>
+  `${city.trim().toLowerCase()}_
+   ${category?.trim().toLowerCase() || 'all'}`
+
+Before any search:
+  const memKey = getMemCacheKey(city, category)
+  if (memoryCache.current.has(memKey)) {
+    setResults(memoryCache.current.get(memKey))
+    setFromCache(true)
+    return
+  }
+
+After successful search:
+  memoryCache.current.set(memKey, results)
+
+Add a fromCache boolean state.
+No UI changes to show it yet — just the logic.
+
+
+
+task 8
+In MapLeads, update the main search 
+handler to use this full flow:
+
+const handleSearch = async (city, category) => {
+  setLoading(true)
+  setError(null)
+
+  // 1. Check memory cache
+  const memKey = getMemCacheKey(city, category)
+  if (memoryCache.current.has(memKey)) {
+    setResults(memoryCache.current.get(memKey))
+    setFromCache(true)
+    setLoading(false)
+    return
+  }
+
+  // 2. Check PocketBase cache
+  const cacheKey = getCacheKey(city, category)
+  const cached = await getCachedResults(
+    pb, cacheKey
+  )
+  if (cached) {
+    setResults(cached)
+    memoryCache.current.set(memKey, cached)
+    setFromCache(true)
+    setLoading(false)
+    return
+  }
+
+  // 3. Geocode city to bbox
+  const bbox = await geocodeCity(city)
+  if (!bbox) {
+    setError(`Could not find "${city}". 
+      Try adding country e.g. "Austin, USA"`)
+    setLoading(false)
+    return
+  }
+
+  // 4. Fetch from Geoapify
+  const results = await fetchAllBusinesses(
+    bbox, category
+  )
+
+  // 5. Save to both caches
+  await saveCachedResults(
+    pb, cacheKey, city, category, results
+  )
+  memoryCache.current.set(memKey, results)
+
+  // 6. Update UI
+  setResults(results)
+  setFromCache(false)
+  setLoading(false)
+}
+
+
+
+
+task 9
+In MapLeads search page, update the 
+search to stream results progressively
+when category is "all".
+
+Instead of waiting for all 17 buckets,
+show results as each bucket resolves:
+
+setResults([])  // clear previous
+setProgress({ current: 0, total: 17 })
+
+for (const bucket of CATEGORY_BUCKETS) {
+  const bucketResults = await 
+    fetchGeoapifyBucket(bbox, bucket)
+  
+  setResults(prev => {
+    const merged = [...prev, ...bucketResults]
+    return deduplicateAndFilter(merged)
+      .sort((a,b) => 
+        b.qualityScore - a.qualityScore
+      )
+  })
+  
+  setProgress(prev => ({
+    ...prev, 
+    current: prev.current + 1
+  }))
+}
+
+Show a progress bar during streaming:
+"Searching... (8/17 categories)"
+Progress bar fills purple as it advances.
+Results appear and grow in real time.
+
+
+
+
+
+
+
+task10
+In MapLeads search results header, 
+add a cache status indicator:
+
+If fromCache is true:
+  Show a small grey badge:
+  Clock icon + "Cached · Updated X hours ago"
+  Next to it: a "Refresh" icon button
+  
+  Clicking Refresh:
+  - Deletes the PocketBase cache record 
+    for this cache_key
+  - Clears memory cache for this key
+  - Re-runs the search fresh
+  - Shows "Refreshing..." on the button
+
+If fromCache is false:
+  Show a small green badge:
+  Zap icon + "Live results"
+  Fades out after 3 seconds
+
+
+
+
+
+
+task 11
+In MapLeads search results, implement 
+load more pagination:
+
+const PAGE_SIZE = 20
+const [visibleCount, setVisibleCount] = useState(20)
+
+const visibleResults = allResults.slice(
+  0, visibleCount
+)
+
+const hasMore = visibleCount < allResults.length
+
+Below the results grid, show:
+- Results count: 
+  "Showing 20 of 847 businesses"
+  text-text-muted text-sm
+
+- If hasMore: "Load 20 more" button
+  secondary style, full width on mobile
+  Shows how many remain:
+  "(827 remaining)"
+  
+  On click: setVisibleCount(c => c + PAGE_SIZE)
+  Smooth scroll to first new result
+
+- If !hasMore and results > 0:
+  "All [X] businesses shown" 
+  text-text-muted text-center text-sm
+
+
+
+
+
+
+
+
+
+task 12
+In MapLeads business result cards, 
+add a lead quality indicator:
+
+Based on place.qualityScore:
+  score >= 50: 
+    green dot + "Strong lead" badge
+    bg-success-subtle text-success-DEFAULT
+  
+  score >= 30:
+    amber dot + "Fair lead" badge  
+    bg-warning-subtle text-warning-DEFAULT
+  
+  score < 30:
+    grey dot + "Limited info" badge
+    bg-bg-elevated text-text-muted
+
+Place the badge in the top-right 
+corner of each business card.
+
+Add a tooltip on hover:
+"Based on available contact info and 
+business data completeness"
+
+
+
+task 13
+In MapLeads searchService.js, add 
+proper Geoapify error handling:
+
+const handleSearchError = (error, city) => {
+  if (error.status === 429) {
+    return "Daily search limit reached. 
+      Try again tomorrow or upgrade to Pro."
+  }
+  if (error.status === 400) {
+    return `Could not find "${city}". 
+      Try a more specific location.`
+  }
+  if (error.status === 401) {
+    return "API configuration error. 
+      Please contact support."
+  }
+  if (error.status === 0 || 
+      error.message === 'Failed to fetch') {
+    return "No internet connection. 
+      Please check your network."
+  }
+  return "Search failed. Please try again."
+}
+
+Show all errors in a styled error banner 
+above the search bar:
+  bg-danger-subtle border border-danger-DEFAULT
+  rounded-xl p-4
+  AlertCircle icon + error message
+  X button to dismiss
+
+
+
+task 14
+In MapLeads PocketBase, add a cleanup 
+function that runs on app startup:
+
+const cleanExpiredCache = async (pb) => {
+  try {
+    const expired = await pb
+      .collection('search_cache')
+      .getFullList({
+        filter: `expires_at < 
+          "${new Date().toISOString()}"`
+      })
+    
+    await Promise.all(
+      expired.map(record => 
+        pb.collection('search_cache')
+          .delete(record.id)
+      )
+    )
+    
+    console.log(
+      `Cleaned ${expired.length} 
+       expired cache entries`
+    )
+  } catch (e) {
+    // Silently fail — not critical
+  }
+}
+
+Call this once in App.jsx on mount:
+useEffect(() => {
+  cleanExpiredCache(pb)
+}, [])
+
