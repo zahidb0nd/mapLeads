@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,16 +9,60 @@ import AnimatedBackground from '@/components/ui/AnimatedBackground'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login, isLoading, error } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [shaking, setShaking] = useState(false)
+  const [validationErrors, setValidationErrors] = useState({})
+  const [sessionMessage, setSessionMessage] = useState('')
+
+  useEffect(() => {
+    const session = searchParams.get('session')
+    const returnUrl = searchParams.get('returnUrl')
+    
+    if (session === 'expired') {
+      setSessionMessage('Your session has expired. Please sign in again.')
+    }
+    
+    if (returnUrl) {
+      setSessionMessage('Please sign in to continue.')
+    }
+  }, [searchParams])
+
+  const validateForm = () => {
+    const errors = {}
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address'
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required'
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setValidationErrors({})
+    
+    if (!validateForm()) {
+      setShaking(true)
+      setTimeout(() => setShaking(false), 400)
+      return
+    }
+    
     try {
       await login(formData.email, formData.password)
-      navigate('/dashboard')
+      
+      // Check for returnUrl in query params
+      const returnUrl = searchParams.get('returnUrl')
+      navigate(returnUrl || '/dashboard', { replace: true })
     } catch {
       setShaking(true)
       setTimeout(() => setShaking(false), 400)
@@ -26,7 +70,12 @@ export default function Login() {
   }
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors({ ...validationErrors, [name]: '' })
+    }
   }
 
   return (
@@ -63,6 +112,13 @@ export default function Login() {
           >
             <h2 className="text-xl font-bold text-text-primary mb-6">Welcome back</h2>
 
+            {/* Session Message */}
+            {sessionMessage && !error && (
+              <div className="mb-4 p-3 rounded-xl border border-purple/30 bg-purple/10">
+                <p className="text-sm text-purple-light">{sessionMessage}</p>
+              </div>
+            )}
+
             {/* Error */}
             {error && (
               <div
@@ -84,9 +140,12 @@ export default function Login() {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleChange}
+                  error={validationErrors.email}
                   required
                   autoFocus
                   autoComplete="email"
+                  aria-invalid={!!validationErrors.email}
+                  aria-describedby={validationErrors.email ? "email-error" : undefined}
                 />
               </div>
 
@@ -110,15 +169,19 @@ export default function Login() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
+                    error={validationErrors.password}
                     required
                     autoComplete="current-password"
                     className="pr-12"
+                    aria-invalid={!!validationErrors.password}
+                    aria-describedby={validationErrors.password ? "password-error" : undefined}
                   />
                   <button
                     type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors min-h-0 w-8 h-8"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

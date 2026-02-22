@@ -24,11 +24,31 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setValidationError('')
-    if (password.length < 8) { setValidationError('Password must be at least 8 characters'); return }
-    if (password !== confirmPassword) { setValidationError('Passwords do not match'); return }
+    
+    if (!password) {
+      setValidationError('Password is required')
+      return
+    }
+    
+    if (password.length < 8) {
+      setValidationError('Password must be at least 8 characters')
+      return
+    }
+    
+    if (!confirmPassword) {
+      setValidationError('Please confirm your password')
+      return
+    }
+    
+    if (password !== confirmPassword) {
+      setValidationError('Passwords do not match')
+      return
+    }
+    
     try {
       await confirmPasswordReset(token, password)
       setSuccess(true)
+      setTimeout(() => navigate('/login'), 2000) // Auto-redirect after 2 seconds
     } catch { /* hook handles error */ }
   }
 

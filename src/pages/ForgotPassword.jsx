@@ -11,9 +11,29 @@ export default function ForgotPassword() {
   const { requestPasswordReset, isLoading, error } = useAuth()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [validationError, setValidationError] = useState('')
+
+  const validateEmail = () => {
+    if (!email.trim()) {
+      setValidationError('Email is required')
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setValidationError('Please enter a valid email address')
+      return false
+    }
+    setValidationError('')
+    return true
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setValidationError('')
+    
+    if (!validateEmail()) {
+      return
+    }
+    
     try {
       await requestPasswordReset(email)
       setSent(true)
@@ -56,17 +76,31 @@ export default function ForgotPassword() {
               <h2 className="text-xl font-bold text-text-primary mb-1">Forgot your password?</h2>
               <p className="text-text-muted text-sm mb-6">Enter your email and we'll send you a reset link.</p>
 
-              {error && (
+              {(error || validationError) && (
                 <div className="mb-4 p-3 rounded-xl border border-danger/30 bg-danger-subtle">
-                  <p className="text-sm text-danger">{error}</p>
+                  <p className="text-sm text-danger">{validationError || error}</p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <Label htmlFor="email">Email address</Label>
-                  <Input id="email" type="email" icon={Mail} placeholder="you@example.com"
-                    value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    icon={Mail} 
+                    placeholder="you@example.com"
+                    value={email} 
+                    onChange={e => {
+                      setEmail(e.target.value)
+                      setValidationError('')
+                    }}
+                    error={validationError}
+                    required 
+                    autoFocus 
+                    aria-invalid={!!validationError}
+                    aria-describedby={validationError ? "email-error" : undefined}
+                  />
                 </div>
                 <Button type="submit" fullWidth disabled={isLoading}>
                   {isLoading ? (

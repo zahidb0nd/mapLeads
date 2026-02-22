@@ -17,8 +17,9 @@ const Input = forwardRef(function Input(
         type={type}
         className={cn(
           'w-full rounded-xl border bg-bg-elevated text-text-primary placeholder:text-text-muted',
-          'px-4 py-3 min-h-[44px] text-base transition-all duration-150 outline-none',
+          'px-4 py-3 min-h-[44px] text-base md:text-sm transition-all duration-150 outline-none',
           'border-border focus:border-purple focus:ring-2 focus:ring-purple-glow',
+          'touch-manipulation', // Improves touch responsiveness on mobile
           error && 'border-danger focus:border-danger focus:ring-danger/20',
           Icon && 'pl-10',
           className
@@ -26,7 +27,7 @@ const Input = forwardRef(function Input(
         {...props}
       />
       {error && (
-        <p className="mt-1 text-sm text-danger" aria-live="polite">{error}</p>
+        <p className="mt-1 text-sm text-danger" aria-live="polite" role="alert">{error}</p>
       )}
     </div>
   )

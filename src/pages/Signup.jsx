@@ -12,9 +12,41 @@ export default function Signup() {
   const { signup, isLoading, error } = useAuth()
   const [formData, setFormData] = useState({ name: '', email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
+  const [validationErrors, setValidationErrors] = useState({})
+
+  const validateForm = () => {
+    const errors = {}
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required'
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters'
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address'
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required'
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters'
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setValidationErrors({})
+    
+    if (!validateForm()) {
+      return
+    }
+    
     try {
       await signup(formData.email, formData.password, formData.name)
       navigate('/dashboard')
@@ -24,7 +56,12 @@ export default function Signup() {
   }
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors({ ...validationErrors, [name]: '' })
+    }
   }
 
   return (
@@ -74,9 +111,12 @@ export default function Signup() {
                 placeholder="Your full name"
                 value={formData.name}
                 onChange={handleChange}
+                error={validationErrors.name}
                 required
                 autoFocus
                 autoComplete="name"
+                aria-invalid={!!validationErrors.name}
+                aria-describedby={validationErrors.name ? "name-error" : undefined}
               />
             </div>
 
@@ -91,8 +131,11 @@ export default function Signup() {
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
+                error={validationErrors.email}
                 required
                 autoComplete="email"
+                aria-invalid={!!validationErrors.email}
+                aria-describedby={validationErrors.email ? "email-error" : undefined}
               />
             </div>
 
@@ -108,16 +151,20 @@ export default function Signup() {
                   placeholder="Min. 8 characters"
                   value={formData.password}
                   onChange={handleChange}
+                  error={validationErrors.password}
                   required
                   minLength={8}
                   autoComplete="new-password"
                   className="pr-12"
+                  aria-invalid={!!validationErrors.password}
+                  aria-describedby={validationErrors.password ? "password-error" : undefined}
                 />
                 <button
                   type="button"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors min-h-0 w-8 h-8"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

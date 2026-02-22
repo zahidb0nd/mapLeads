@@ -15,7 +15,19 @@ export function useAuth() {
       setUser(authData.record)
       return authData.record
     } catch (err) {
-      const msg = err?.response?.message || err.message || 'Invalid email or password'
+      console.error('Login error:', err)
+      let msg = 'Something went wrong while processing your request.'
+      
+      if (err?.status === 400) {
+        msg = 'Invalid email or password. Please check your credentials and try again.'
+      } else if (err?.status === 429) {
+        msg = 'Too many attempts. Please wait a moment and try again.'
+      } else if (err?.response?.message) {
+        msg = err.response.message
+      } else if (err?.message && !err.message.includes('fetch')) {
+        msg = err.message
+      }
+      
       setError(msg)
       throw err
     } finally {
@@ -37,7 +49,12 @@ export function useAuth() {
       })
 
       // Send email verification
-      await pb.collection('users').requestVerification(email)
+      try {
+        await pb.collection('users').requestVerification(email)
+      } catch (verifyErr) {
+        console.warn('Email verification request failed:', verifyErr)
+        // Continue even if verification email fails
+      }
 
       // Auto login after signup
       const authData = await pb.collection('users').authWithPassword(email, password)
@@ -45,7 +62,23 @@ export function useAuth() {
 
       return authData.record
     } catch (err) {
-      const msg = err?.response?.message || err.message || 'Failed to create account'
+      console.error('Signup error:', err)
+      let msg = 'Something went wrong while processing your request.'
+      
+      if (err?.status === 400) {
+        if (err?.response?.data?.email) {
+          msg = 'This email is already registered. Please sign in instead.'
+        } else if (err?.response?.data?.password) {
+          msg = 'Password does not meet requirements. Please use at least 8 characters.'
+        } else {
+          msg = err?.response?.message || 'Invalid signup information. Please check your details.'
+        }
+      } else if (err?.response?.message) {
+        msg = err.response.message
+      } else if (err?.message && !err.message.includes('fetch')) {
+        msg = err.message
+      }
+      
       setError(msg)
       throw err
     } finally {
@@ -64,7 +97,18 @@ export function useAuth() {
     try {
       await pb.collection('users').requestPasswordReset(email)
     } catch (err) {
-      const msg = err?.response?.message || err.message || 'Failed to send reset email'
+      console.error('Password reset request error:', err)
+      let msg = 'Something went wrong while processing your request.'
+      
+      if (err?.status === 404) {
+        // Don't reveal if email exists for security
+        msg = 'If an account exists with this email, you will receive a password reset link.'
+      } else if (err?.response?.message) {
+        msg = err.response.message
+      } else if (err?.message && !err.message.includes('fetch')) {
+        msg = err.message
+      }
+      
       setError(msg)
       throw err
     } finally {
@@ -78,7 +122,17 @@ export function useAuth() {
     try {
       await pb.collection('users').confirmPasswordReset(token, password, password)
     } catch (err) {
-      const msg = err?.response?.message || err.message || 'Failed to reset password'
+      console.error('Password reset confirmation error:', err)
+      let msg = 'Something went wrong while processing your request.'
+      
+      if (err?.status === 400) {
+        msg = 'Invalid or expired reset link. Please request a new password reset.'
+      } else if (err?.response?.message) {
+        msg = err.response.message
+      } else if (err?.message && !err.message.includes('fetch')) {
+        msg = err.message
+      }
+      
       setError(msg)
       throw err
     } finally {
@@ -92,7 +146,17 @@ export function useAuth() {
     try {
       await pb.collection('users').confirmVerification(token)
     } catch (err) {
-      const msg = err?.response?.message || err.message || 'Failed to verify email'
+      console.error('Email verification error:', err)
+      let msg = 'Something went wrong while processing your request.'
+      
+      if (err?.status === 400) {
+        msg = 'Invalid or expired verification link. Please request a new verification email.'
+      } else if (err?.response?.message) {
+        msg = err.response.message
+      } else if (err?.message && !err.message.includes('fetch')) {
+        msg = err.message
+      }
+      
       setError(msg)
       throw err
     } finally {

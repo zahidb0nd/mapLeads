@@ -31,10 +31,10 @@ const variantStyles = {
 }
 
 const sizeStyles = {
-  sm:   'text-sm px-3 py-2 min-h-[40px] gap-1.5',
-  md:   'text-sm px-6 py-3 min-h-[44px] gap-2',
+  sm:   'text-sm px-3 py-2 min-h-[44px] gap-1.5', // Increased min-height for better touch targets
+  md:   'text-sm px-6 py-3 min-h-[48px] gap-2',   // Increased for mobile accessibility
   lg:   'text-base px-8 py-3.5 min-h-[52px] gap-2',
-  icon: 'w-10 h-10 min-h-[40px] p-0',
+  icon: 'w-10 h-10 min-h-[44px] p-0',             // Minimum 44px for touch targets
 }
 
 const Button = forwardRef(function Button(
@@ -53,6 +53,7 @@ const Button = forwardRef(function Button(
       ref={ref}
       className={cn(
         'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150 cursor-pointer select-none',
+        'touch-manipulation', // Improves touch responsiveness on mobile
         variantStyles[variant] ?? variantStyles.primary,
         sizeStyles[size] ?? sizeStyles.md,
         fullWidth && 'w-full',
