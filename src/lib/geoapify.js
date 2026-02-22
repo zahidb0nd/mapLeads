@@ -6,13 +6,69 @@ class GeoapifyAPI {
     this.apiKey = apiKey
   }
 
-  async searchPlaces({ query, latitude, longitude, radius = 5000, categories = [], limit = 50 }) {
+  /**
+   * Geocode a city name to get its bounding box
+   * @param {string} cityName - City name to geocode (e.g., "Austin, USA")
+   * @returns {Promise<{bbox: number[], name: string, country: string}>}
+   */
+  async geocodeCityToBbox(cityName) {
     if (!this.apiKey) {
       throw new Error('Geoapify API key is not configured')
     }
 
+    try {
+      const response = await fetch(
+        `${PROXY_BASE_URL}/geoapify/geocode?text=${encodeURIComponent(cityName)}&type=city&limit=1`
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to geocode city')
+      }
+
+      const data = await response.json()
+      
+      if (!data.features || data.features.length === 0) {
+        throw new Error(`We couldn't find "${cityName}". Try adding the country e.g. 'Austin, USA' or 'Mumbai, India'`)
+      }
+
+      const feature = data.features[0]
+      const bbox = feature.bbox // [lon_min, lat_min, lon_max, lat_max]
+      
+      if (!bbox || bbox.length !== 4) {
+        throw new Error('Invalid bounding box received from geocoding service')
+      }
+
+      return {
+        bbox,
+        name: feature.properties.city || feature.properties.name,
+        country: feature.properties.country,
+        state: feature.properties.state,
+        formatted: feature.properties.formatted
+      }
+    } catch (error) {
+      console.error('City geocoding error:', error)
+      throw error
+    }
+  }
+
+  async searchPlaces({ query, latitude, longitude, radius = 5000, categories = [], limit = 50, bbox = null }) {
+    if (!this.apiKey) {
+      throw new Error('Geoapify API key is not configured')
+    }
+
+    let filter
+    if (bbox && bbox.length === 4) {
+      // Use bounding box filter: rect:lon_min,lat_min,lon_max,lat_max
+      filter = `rect:${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}`
+    } else if (latitude && longitude) {
+      // Use circle filter as fallback
+      filter = `circle:${longitude},${latitude},${radius}`
+    } else {
+      throw new Error('Either bbox or latitude/longitude is required')
+    }
+
     const params = new URLSearchParams({
-      filter: `circle:${longitude},${latitude},${radius}`,
+      filter,
       limit: Math.min(limit, 500).toString(),
       lang: 'en',
     })

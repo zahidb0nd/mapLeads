@@ -31,7 +31,7 @@ function formatSuggestion(item) {
 
 export default function SearchForm({ onSearchComplete }) {
   const { searchFilters, setSearchFilters } = useStore()
-  const { search, isLoading, error } = useBusinessSearch()
+  const { search, geocodeCity, isLoading, error } = useBusinessSearch()
   const { warning, error: toastError } = useToast()
 
   const [localQuery,    setLocalQuery]    = useState(searchFilters.query    || '')
@@ -143,39 +143,69 @@ export default function SearchForm({ onSearchComplete }) {
   }
 
   const geocodeLocation = async (locationText) => {
+    // Check if already cached
     if (
       searchFilters.location === locationText &&
-      searchFilters.latitude &&
-      searchFilters.longitude
+      searchFilters.bbox
     ) {
-      return { latitude: searchFilters.latitude, longitude: searchFilters.longitude }
+      return { bbox: searchFilters.bbox }
     }
+    
+    // Check if coordinates were manually entered
     const coordMatch = locationText.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/)
     if (coordMatch) {
-      return { latitude: parseFloat(coordMatch[1]), longitude: parseFloat(coordMatch[2]) }
+      const latitude = parseFloat(coordMatch[1])
+      const longitude = parseFloat(coordMatch[2])
+      // Clear bbox when using coordinates
+      setSearchFilters({ bbox: null })
+      return { latitude, longitude }
     }
-    const response = await fetch(`/api/geocode?q=${encodeURIComponent(locationText)}&limit=1`)
-    const data = await response.json()
-    if (!data || data.length === 0) {
-      throw new Error(`Could not find "${locationText}". Try a different city name.`)
+    
+    // Geocode city to get bounding box
+    try {
+      const result = await geocodeCity(locationText)
+      return { bbox: result.bbox }
+    } catch (err) {
+      // If city geocoding fails, show the specific error message
+      throw err
     }
-    return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
   }
 
   const doSearch = async (query, location) => {
     setShowSuggestions(false)
-    let lat = searchFilters.latitude, lng = searchFilters.longitude
+    
     try {
-      const coords = await geocodeLocation(location)
-      lat = coords.latitude; lng = coords.longitude
+      const geoData = await geocodeLocation(location)
+      
+      // Update filters with geocoding results
+      const filters = {
+        query,
+        location,
+        categories: searchFilters.categories || []
+      }
+      
+      // Use bbox if available, otherwise fall back to lat/lon
+      if (geoData.bbox) {
+        filters.bbox = geoData.bbox
+        // Clear lat/lon when using bbox
+        filters.latitude = null
+        filters.longitude = null
+      } else if (geoData.latitude && geoData.longitude) {
+        filters.latitude = geoData.latitude
+        filters.longitude = geoData.longitude
+        filters.bbox = null
+      }
+      
+      setSearchFilters(filters)
+      setLastSubmit({ query, location })
+      
+      // Execute search with the geocoded data
+      const results = await search(filters)
+      if (onSearchComplete) onSearchComplete(results)
     } catch (err) {
-      toastError('Location not found', err.message)
+      toastError('Search failed', err.message)
       return
     }
-    setSearchFilters({ query, location, latitude: lat, longitude: lng })
-    setLastSubmit({ query, location })
-    const results = await search({ query, latitude: lat, longitude: lng, categories: searchFilters.categories || [] })
-    if (onSearchComplete) onSearchComplete(results)
   }
 
   const handleSubmit = (e) => { e.preventDefault(); doSearch(localQuery, localLocation) }

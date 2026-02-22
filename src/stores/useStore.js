@@ -27,6 +27,7 @@ const useStore = create((set, get) => ({
     longitude: null,
     radius: 5000,
     categories: [],
+    bbox: null, // Bounding box from city geocoding [lon_min, lat_min, lon_max, lat_max]
   },
 
   // History and saved searches
@@ -99,6 +100,7 @@ const useStore = create((set, get) => ({
       longitude: null,
       radius: 5000,
       categories: [],
+      bbox: null,
     }
   }),
 

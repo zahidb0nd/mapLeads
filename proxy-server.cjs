@@ -61,6 +61,30 @@ app.get('/api/geoapify/place-details', async (req, res) => {
   }
 });
 
+// Proxy endpoint for Geoapify Geocoding (City to Bounding Box)
+app.get('/api/geoapify/geocode', async (req, res) => {
+  const { text, type, limit } = req.query;
+
+  const params = new URLSearchParams({
+    text: text || '',
+    type: type || 'city',
+    limit: limit || '1',
+    apiKey: GEOAPIFY_API_KEY,
+  });
+
+  try {
+    const response = await fetch(`https://api.geoapify.com/v1/geocode/search?${params}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Geocoding proxy error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Proxy endpoint for Overpass API (OpenStreetMap business search)
 app.post('/api/overpass', async (req, res) => {
   const { query } = req.body;

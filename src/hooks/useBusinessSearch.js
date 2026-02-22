@@ -8,18 +8,49 @@ export function useBusinessSearch() {
     setSearchResults, 
     setIsSearching, 
     setSearchError,
+    setSearchFilters,
     addSearchToHistory
   } = useStore()
   
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  /**
+   * Geocode a city name and store the bbox in filters
+   * @param {string} cityName - City name to geocode
+   * @returns {Promise<{bbox: number[], name: string}>}
+   */
+  const geocodeCity = async (cityName) => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const result = await geoapifyAPI.geocodeCityToBbox(cityName)
+      
+      // Store bbox in search filters
+      setSearchFilters({
+        location: result.formatted || `${result.name}, ${result.country}`,
+        bbox: result.bbox
+      })
+      
+      return result
+    } catch (err) {
+      console.error('Geocode city error:', err)
+      const errorMsg = err.message || 'Failed to find city location'
+      setError(errorMsg)
+      setSearchError(errorMsg)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const search = async (customFilters = {}) => {
     const filters = { ...searchFilters, ...customFilters }
     
-    // Validate required fields
-    if (!filters.latitude || !filters.longitude) {
-      const errorMsg = 'Location coordinates are required'
+    // Validate required fields - need either bbox OR lat/lon
+    if (!filters.bbox && (!filters.latitude || !filters.longitude)) {
+      const errorMsg = 'Location is required. Please enter a city or use current location.'
       setError(errorMsg)
       setSearchError(errorMsg)
       return []
@@ -38,6 +69,7 @@ export function useBusinessSearch() {
         longitude: filters.longitude,
         radius: filters.radius,
         categories: filters.categories,
+        bbox: filters.bbox, // Pass bbox if available
         limit: 50
       })
 
@@ -97,6 +129,7 @@ export function useBusinessSearch() {
 
   return {
     search,
+    geocodeCity,
     getPlaceDetails,
     isLoading,
     error
