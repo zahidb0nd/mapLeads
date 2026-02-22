@@ -65,6 +65,30 @@ const getQualityScore = (place) => {
 }
 
 /**
+ * Handle search errors and return user-friendly messages
+ * @param {Error} error - Error object
+ * @param {string} city - City name for context
+ * @returns {string} User-friendly error message
+ */
+const handleSearchError = (error, city = '') => {
+  if (error.status === 429) {
+    return 'Daily search limit reached. Try again tomorrow or upgrade to Pro.'
+  }
+  if (error.status === 400) {
+    return city 
+      ? `Could not find "${city}". Try a more specific location.`
+      : 'Invalid search parameters. Please try again.'
+  }
+  if (error.status === 401 || error.status === 403) {
+    return 'API configuration error. Please contact support.'
+  }
+  if (error.status === 0 || error.message === 'Failed to fetch' || error.name === 'TypeError') {
+    return 'No internet connection. Please check your network.'
+  }
+  return 'Search failed. Please try again.'
+}
+
+/**
  * Fetch businesses from Geoapify for a single category bucket
  * @param {string} bucket - Geoapify category string (e.g., 'catering.restaurant')
  * @returns {Promise<Array>} Array of place features
@@ -75,7 +99,9 @@ const fetchGeoapifyBucket = async (bucket) => {
   console.log('[MapLeads] API key present:', !!apiKey)
   
   if (!apiKey) {
-    throw new Error('Geoapify API key is not configured')
+    const error = new Error('Geoapify API key is not configured')
+    error.status = 401
+    throw error
   }
 
   const [lon_min, lat_min, lon_max, lat_max] = BANGALORE_BBOX
@@ -89,23 +115,43 @@ const fetchGeoapifyBucket = async (bucket) => {
 
   console.log(`[MapLeads] Fetching bucket: ${bucket}`)
 
-  const response = await fetch(url)
-  
-  if (response.status === 400) {
-    console.warn(`[MapLeads] Invalid category: ${bucket}`)
-    return []
-  }
-  
-  if (!response.ok) {
-    console.warn(`Bucket ${bucket} failed:`, response.status)
-    return []
-  }
+  try {
+    const response = await fetch(url)
+    
+    if (response.status === 400) {
+      console.warn(`[MapLeads] Invalid category: ${bucket}`)
+      return []
+    }
+    
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status}`)
+      error.status = response.status
+      console.warn(`Bucket ${bucket} failed:`, response.status)
+      
+      // For rate limiting, throw error to stop all requests
+      if (response.status === 429) {
+        throw error
+      }
+      
+      return []
+    }
 
-  const data = await response.json()
-  const features = data.features || []
-  console.log(`[MapLeads] Bucket ${bucket} returned ${features.length} places`)
-  return features
+    const data = await response.json()
+    const features = data.features || []
+    console.log(`[MapLeads] Bucket ${bucket} returned ${features.length} places`)
+    return features
+  } catch (err) {
+    if (err.status) {
+      throw err
+    }
+    // Network error
+    const error = new Error('Failed to fetch')
+    error.status = 0
+    throw error
+  }
 }
+
+export { handleSearchError }
 
 /**
  * Transform a Geoapify place feature to our app's format

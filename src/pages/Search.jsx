@@ -3,7 +3,7 @@ import {
   Search as SearchIcon, MapPin, Tag, SlidersHorizontal, Download,
   LayoutGrid, Table2, Building2, Globe, Star, Phone, ExternalLink,
   Bookmark, SearchX, WifiOff, X, RefreshCw, ChevronUp, ChevronDown,
-  Clock, Zap,
+  Clock, Zap, AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,7 @@ import { exportToCSV } from '@/lib/utils'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import SearchForm from '@/components/search/SearchForm'
 import { useBusinessSearch } from '@/hooks/useBusinessSearch'
-import { fetchAllBusinesses, getCachedResults, saveCachedResults } from '@/lib/searchService'
+import { fetchAllBusinesses, getCachedResults, saveCachedResults, handleSearchError } from '@/lib/searchService'
 import pb from '@/lib/pocketbase'
 
 const QUICK_CATEGORIES = [
@@ -379,7 +379,8 @@ export default function Search() {
       }
     } catch (err) {
       console.error('Search failed:', err)
-      setSearchError('Search failed. Please try again.')
+      const errorMessage = handleSearchError(err, city)
+      setSearchError(errorMessage)
     } finally {
       setIsSearching(false)
     }
@@ -466,6 +467,26 @@ export default function Search() {
           ))}
         </div>
       </div>
+
+      {/* Error banner */}
+      {searchError && (
+        <div className="rounded-xl border p-4 flex items-start gap-3" style={{ 
+          background: 'rgba(244, 63, 94, 0.1)', 
+          borderColor: '#F43F5E' 
+        }}>
+          <AlertCircle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-danger font-medium">{searchError}</p>
+          </div>
+          <button
+            onClick={() => setSearchError(null)}
+            className="text-danger hover:text-danger-DEFAULT transition-colors"
+            aria-label="Dismiss error"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       {/* Filter bar */}
       {hasSearched && (
