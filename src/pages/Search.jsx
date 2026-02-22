@@ -251,9 +251,7 @@ export default function Search() {
   const displayResults = useMemo(() => {
     let results = [...searchResults]
     if (filterByPhone) results = results.filter(b => b.tel)
-    if (activeCategory) results = results.filter(b =>
-      b.categories?.some(c => c.name?.toLowerCase().includes(activeCategory))
-    )
+    // Don't filter by activeCategory - it's already filtered by the search
     switch (sortBy) {
       case 'name':    results.sort((a, b) => a.name?.localeCompare(b.name)); break
       case 'name_desc': results.sort((a, b) => b.name?.localeCompare(a.name)); break
@@ -262,7 +260,7 @@ export default function Search() {
       default: break
     }
     return results
-  }, [searchResults, sortBy, filterByPhone, activeCategory])
+  }, [searchResults, sortBy, filterByPhone])
 
   const handleExportCSV = () => {
     if (!searchResults.length) { warning('No results', 'Run a search first.'); return }
